@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --excel-green: #217346;
+  --excel-dark-green: #1f6e42;
+  --excel-light-green: #c6e0b4;
+  --excel-gray: #f3f3f3;
+  --excel-dark-gray: #202020;
+}
+
+body {
+  @apply bg-excel-gray text-excel-dark-gray;
+}
+
+.btn-primary {
+  @apply bg-excel-green hover:bg-excel-dark-green text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg;
+}
+
+.btn-secondary {
+  @apply bg-white hover:bg-gray-100 text-excel-dark-gray border border-gray-300 font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
+}
+
+.progress-bar {
+  @apply w-full bg-gray-200 rounded-full h-2;
+}
+
+.progress-fill {
+  @apply h-2 rounded-full transition-all duration-300;
+}
+
+.quiz-question {
+  @apply text-lg font-semibold text-gray-800 mb-4;
+}
+
+.quiz-option {
+  @apply w-full text-left p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer;
+}
+
+.quiz-option.selected {
+  @apply bg-excel-light-green border-excel-green;
+}
+
+.quiz-option.correct {
+  @apply bg-green-100 border-green-400;
+}
+
+.quiz-option.wrong {
+  @apply bg-red-100 border-red-400;
+}

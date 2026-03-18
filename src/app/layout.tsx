@@ -1,9 +1,13 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
+import { IBM_Plex_Sans } from 'next/font/google'
+import '../styles/globals.css'
 import { AuthProvider } from '@/lib/auth'
+import ChatWidget from '@/components/ChatWidget'
 
-const inter = Inter({ subsets: ['latin'] })
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+})
 
 export const metadata: Metadata = {
   title: 'Excel Mastery Quiz',
@@ -17,9 +21,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={ibmPlexSans.className}>
         <AuthProvider>
           {children}
+          <ChatWidget />
         </AuthProvider>
       </body>
     </html>

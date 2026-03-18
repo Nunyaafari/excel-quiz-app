@@ -1,15 +1,29 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { auth } from './firebase'
-import { onAuthStateChanged, User } from 'firebase/auth'
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth'
+import { auth, signInWithGoogle, signOutUser } from './firebase'
 
-interface AuthContextType {
-  user: User | null
-  loading: boolean
+interface AuthUser {
+  uid: string
+  email: string | null
+  displayName: string | null
+  photoURL: string | null
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true })
+interface AuthContextType {
+  user: AuthUser | null
+  loading: boolean
+  signIn: () => Promise<void>
+  signOut: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextType>({ 
+  user: null, 
+  loading: true,
+  signIn: async () => {},
+  signOut: async () => {}
+ })
 
 export function useAuth() {
   return useContext(AuthContext)
@@ -20,21 +34,57 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user)
-      setLoading(false)
-    })
+    let resolved = false
 
-    return unsubscribe
+    const clearLoading = () => {
+      if (!resolved) {
+        resolved = true
+      }
+      setLoading(false)
+    }
+
+    const fallbackTimer = window.setTimeout(() => {
+      clearLoading()
+    }, 4000)
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (firebaseUser) => {
+        setUser(mapAuthUser(firebaseUser))
+        window.clearTimeout(fallbackTimer)
+        clearLoading()
+      },
+      (error) => {
+        console.error('Firebase auth state listener error:', error)
+        setUser(null)
+        window.clearTimeout(fallbackTimer)
+        clearLoading()
+      }
+    )
+
+    return () => {
+      window.clearTimeout(fallbackTimer)
+      unsubscribe()
+    }
   }, [])
+
+  const signIn = async () => {
+    await signInWithGoogle()
+  }
+
+  const signOut = async () => {
+    await signOutUser()
+  }
 
   const value = {
     user,
     loading,
+    signIn,
+    signOut,
   }
 
   return (
@@ -42,4 +92,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       {children}
     </AuthContext.Provider>
   )
+}
+
+function mapAuthUser(firebaseUser: FirebaseUser | null): AuthUser | null {
+  if (!firebaseUser) {
+    return null
+  }
+
+  return {
+    uid: firebaseUser.uid,
+    email: firebaseUser.email,
+    displayName: firebaseUser.displayName,
+    photoURL: firebaseUser.photoURL,
+  }
 }

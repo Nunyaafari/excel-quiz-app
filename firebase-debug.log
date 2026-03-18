@@ -1,0 +1,442 @@
+[debug] [2026-03-07T14:31:53.918Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T14:31:53.924Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase deploy --only firestore:rules --project excel-quiz-app-12345 --non-interactive
+[debug] [2026-03-07T14:31:53.924Z] CLI Version:   15.9.0
+[debug] [2026-03-07T14:31:53.925Z] Platform:      darwin
+[debug] [2026-03-07T14:31:53.925Z] Node Version:  v25.6.1
+[debug] [2026-03-07T14:31:53.925Z] Time:          Sat Mar 07 2026 14:31:53 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T14:31:53.925Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T14:31:53.934Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[error] 
+[error] Error: Cannot understand what targets to deploy/serve. No targets in firebase.json match '--only firestore:rules'.
+[debug] [2026-03-07T14:32:17.114Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T14:32:17.121Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase deploy --only firestore:rules --project excel-quiz-app-12345 --config /tmp/firebase-firestore-rules.json --non-interactive
+[debug] [2026-03-07T14:32:17.123Z] CLI Version:   15.9.0
+[debug] [2026-03-07T14:32:17.123Z] Platform:      darwin
+[debug] [2026-03-07T14:32:17.123Z] Node Version:  v25.6.1
+[debug] [2026-03-07T14:32:17.124Z] Time:          Sat Mar 07 2026 14:32:17 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T14:32:17.124Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T14:32:17.128Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-03-07T14:32:21.496Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-07T14:32:21.651Z] Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at GoogleAuth.getApplicationDefaultAsync (/usr/local/lib/node_modules/firebase-tools/node_modules/google-auth-library/build/src/auth/googleauth.js:287:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async GoogleAuth._GoogleAuth_determineClient (/usr/local/lib/node_modules/firebase-tools/node_modules/google-auth-library/build/src/auth/googleauth.js:834:32)
+    at async GoogleAuth.getClient (/usr/local/lib/node_modules/firebase-tools/node_modules/google-auth-library/build/src/auth/googleauth.js:698:20)
+    at async GoogleAuth.getAccessToken (/usr/local/lib/node_modules/firebase-tools/node_modules/google-auth-library/build/src/auth/googleauth.js:722:24)
+    at async autoAuth (/usr/local/lib/node_modules/firebase-tools/lib/requireAuth.js:28:19)
+    at async requireAuth (/usr/local/lib/node_modules/firebase-tools/lib/requireAuth.js:90:20)
+    at async requirePermissions (/usr/local/lib/node_modules/firebase-tools/lib/requirePermissions.js:17:5)
+    at async /usr/local/lib/node_modules/firebase-tools/lib/command.js:264:17
+[error] 
+[error] Error: Failed to authenticate, have you run firebase login?
+[debug] [2026-03-07T14:32:36.007Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T14:32:36.045Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase login --no-localhost
+[debug] [2026-03-07T14:32:36.045Z] CLI Version:   15.9.0
+[debug] [2026-03-07T14:32:36.046Z] Platform:      darwin
+[debug] [2026-03-07T14:32:36.046Z] Node Version:  v25.6.1
+[debug] [2026-03-07T14:32:36.046Z] Time:          Sat Mar 07 2026 14:32:36 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T14:32:36.046Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T14:32:36.051Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[info] i  The Firebase CLI’s MCP server feature can optionally make use of Gemini in Firebase. Learn more about Gemini in Firebase and how it uses your data: https://firebase.google.com/docs/gemini-in-firebase#how-gemini-in-firebase-uses-your-data 
+[debug] [2026-03-07T14:32:37.600Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-03-07T14:32:37.601Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[info] 
+[info] i  Firebase optionally collects CLI and Emulator Suite usage and error reporting information to help improve our products. Data is collected in accordance with Google's privacy policy (https://policies.google.com/privacy) and is not used to identify you. 
+[debug] [2026-03-07T14:32:49.933Z] >>> [apiv2][query] POST https://auth.firebase.tools/attest [none]
+[debug] [2026-03-07T14:32:49.933Z] >>> [apiv2][body] POST https://auth.firebase.tools/attest {"session_id":"b0497483-527d-4cda-8dc2-dc53ea600dcc"}
+[debug] [2026-03-07T14:32:50.868Z] <<< [apiv2][status] POST https://auth.firebase.tools/attest 200
+[debug] [2026-03-07T14:32:50.868Z] <<< [apiv2][body] POST https://auth.firebase.tools/attest {"token":"s6rc_2de9Jpku9az-bHSt-Ggqhc1FkfhxgjUvFzH6sU"}
+[info] 
+[info] To sign in to the Firebase CLI:
+[info] 
+[info] 1. Take note of your session ID:
+[info] 
+[info]    B0497
+[info] 
+[info] 2. Visit the URL below on any device and follow the instructions to get your code:
+[info] 
+[info]    https://auth.firebase.tools/login?code_challenge=v6erxlcccMZ5Q4fxcI6W3Ya42_wvpPIiMxwhrj2Wa2A&session=b0497483-527d-4cda-8dc2-dc53ea600dcc&attest=s6rc_2de9Jpku9az-bHSt-Ggqhc1FkfhxgjUvFzH6sU
+[info] 
+[info] 3. Paste or enter the authorization code below once you have it:
+[info] 
+[debug] [2026-03-07T14:37:48.804Z] >>> [apiv2][query] POST https://accounts.google.com/o/oauth2/token [none]
+[debug] [2026-03-07T14:37:48.826Z] >>> [apiv2][body] POST https://accounts.google.com/o/oauth2/token [omitted]
+[debug] [2026-03-07T14:37:59.603Z] *** [apiv2] error from fetch(https://accounts.google.com/o/oauth2/token, {"headers":{},"method":"POST","body":{"_overheadLength":655,"_valueLength":287,"_valuesToMeasure":[],"writable":false,"readable":true,"dataSize":0,"maxDataSize":2097152,"pauseStreams":true,"_released":true,"_streams":[],"_currentStream":null,"_insideLoop":false,"_pendingNext":false,"_boundary":"--------------------------692be1b9b860e765f8aefd6d","_events":{},"_eventsCount":1}}): FetchError: request to https://accounts.google.com/o/oauth2/token failed, reason: socket hang up
+[debug] [2026-03-07T14:37:59.625Z] Token Fetch Error: FirebaseError: Failed to make request to https://accounts.google.com/o/oauth2/token
+    at RetryOperation._fn (/usr/local/lib/node_modules/firebase-tools/lib/apiv2.js:282:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] 
+[error] Error: Unable to authenticate using the provided code. Please try again.
+[debug] [2026-03-07T14:38:11.587Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T14:38:11.615Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase login --no-localhost
+[debug] [2026-03-07T14:38:11.616Z] CLI Version:   15.9.0
+[debug] [2026-03-07T14:38:11.616Z] Platform:      darwin
+[debug] [2026-03-07T14:38:11.616Z] Node Version:  v25.6.1
+[debug] [2026-03-07T14:38:11.617Z] Time:          Sat Mar 07 2026 14:38:11 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T14:38:11.617Z] ----------------------------------------------------------------------
+[debug] 
+[info] i  The Firebase CLI’s MCP server feature can optionally make use of Gemini in Firebase. Learn more about Gemini in Firebase and how it uses your data: https://firebase.google.com/docs/gemini-in-firebase#how-gemini-in-firebase-uses-your-data 
+[info] 
+[info] i  Firebase optionally collects CLI and Emulator Suite usage and error reporting information to help improve our products. Data is collected in accordance with Google's privacy policy (https://policies.google.com/privacy) and is not used to identify you. 
+[debug] [2026-03-07T14:38:22.686Z] >>> [apiv2][query] POST https://auth.firebase.tools/attest [none]
+[debug] [2026-03-07T14:38:22.687Z] >>> [apiv2][body] POST https://auth.firebase.tools/attest {"session_id":"1f3e9c60-bf8f-4037-9f24-89e9a9a9fb8e"}
+[debug] [2026-03-07T14:38:25.319Z] <<< [apiv2][status] POST https://auth.firebase.tools/attest 200
+[debug] [2026-03-07T14:38:25.319Z] <<< [apiv2][body] POST https://auth.firebase.tools/attest {"token":"8nU1UPME2ASgRUInKyb8Zi1zxWNIYjCtY3F8tHzGQU0"}
+[info] 
+[info] To sign in to the Firebase CLI:
+[info] 
+[info] 1. Take note of your session ID:
+[info] 
+[info]    1F3E9
+[info] 
+[info] 2. Visit the URL below on any device and follow the instructions to get your code:
+[info] 
+[info]    https://auth.firebase.tools/login?code_challenge=_mF8TT5yrk2sRmXMYkDl4oRYxLLwl2yYL39t0MGjJD8&session=1f3e9c60-bf8f-4037-9f24-89e9a9a9fb8e&attest=8nU1UPME2ASgRUInKyb8Zi1zxWNIYjCtY3F8tHzGQU0
+[info] 
+[info] 3. Paste or enter the authorization code below once you have it:
+[info] 
+[debug] [2026-03-07T14:40:29.691Z] >>> [apiv2][query] POST https://accounts.google.com/o/oauth2/token [none]
+[debug] [2026-03-07T14:40:29.788Z] >>> [apiv2][body] POST https://accounts.google.com/o/oauth2/token [omitted]
+[debug] [2026-03-07T14:40:30.830Z] <<< [apiv2][status] POST https://accounts.google.com/o/oauth2/token 200
+[debug] [2026-03-07T14:40:43.197Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T14:40:43.224Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase deploy --only firestore:rules --project excel-quiz-app-12345 --config /tmp/firebase-firestore-rules.json --non-interactive
+[debug] [2026-03-07T14:40:43.225Z] CLI Version:   15.9.0
+[debug] [2026-03-07T14:40:43.225Z] Platform:      darwin
+[debug] [2026-03-07T14:40:43.225Z] Node Version:  v25.6.1
+[debug] [2026-03-07T14:40:43.226Z] Time:          Sat Mar 07 2026 14:40:43 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T14:40:43.226Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T14:40:52.452Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-07T14:40:52.467Z] > authorizing via signed-in user (afari.nunya@gmail.com)
+[debug] [2026-03-07T14:40:52.469Z] [iam] checking project excel-quiz-app-12345 for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-03-07T14:40:52.479Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:40:52.479Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:40:52.489Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-12345:testIamPermissions [none]
+[debug] [2026-03-07T14:40:52.498Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-12345:testIamPermissions  x-goog-user-project=excel-quiz-app-12345
+[debug] [2026-03-07T14:40:52.503Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-12345:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-03-07T14:40:54.328Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-12345:testIamPermissions 400
+[debug] [2026-03-07T14:40:54.329Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-12345:testIamPermissions {"error":{"code":400,"message":"Project 'projects/excel-quiz-app-12345' not found or deleted.","status":"INVALID_ARGUMENT","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"USER_PROJECT_DENIED","domain":"googleapis.com","metadata":{"containerInfo":"projects/excel-quiz-app-12345","consumer":"projects/excel-quiz-app-12345","service":"cloudresourcemanager.googleapis.com"}}]}}
+[debug] [2026-03-07T14:40:54.331Z] [iam] error while checking permissions, command may fail: Request to https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-12345:testIamPermissions had HTTP Error: 400, Project 'projects/excel-quiz-app-12345' not found or deleted.
+[info] 
+[info] === Deploying to 'excel-quiz-app-12345'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-03-07T14:40:54.366Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:40:54.370Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:40:54.370Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-12345/services/firestore.googleapis.com [none]
+[debug] [2026-03-07T14:40:54.371Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-12345/services/firestore.googleapis.com  x-goog-user-project=excel-quiz-app-12345
+[debug] [2026-03-07T14:40:56.187Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-12345/services/firestore.googleapis.com 400
+[debug] [2026-03-07T14:40:56.187Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-12345/services/firestore.googleapis.com [omitted]
+[error] 
+[error] Error: Request to https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-12345/services/firestore.googleapis.com had HTTP Error: 400, Project 'projects/excel-quiz-app-12345' not found or deleted.
+[debug] [2026-03-07T14:40:56.197Z] Error Context: {
+  "body": {
+    "error": {
+      "code": 400,
+      "message": "Project 'projects/excel-quiz-app-12345' not found or deleted.",
+      "status": "INVALID_ARGUMENT",
+      "details": [
+        {
+          "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+          "reason": "USER_PROJECT_DENIED",
+          "domain": "googleapis.com",
+          "metadata": {
+            "service": "serviceusage.googleapis.com",
+            "containerInfo": "projects/excel-quiz-app-12345",
+            "consumer": "projects/excel-quiz-app-12345"
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "statusCode": 400
+  }
+}
+[debug] [2026-03-07T14:41:07.683Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T14:41:07.707Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase projects:list --json
+[debug] [2026-03-07T14:41:07.708Z] CLI Version:   15.9.0
+[debug] [2026-03-07T14:41:07.709Z] Platform:      darwin
+[debug] [2026-03-07T14:41:07.709Z] Node Version:  v25.6.1
+[debug] [2026-03-07T14:41:07.709Z] Time:          Sat Mar 07 2026 14:41:07 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T14:41:07.709Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T14:41:08.331Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-07T14:41:08.333Z] > authorizing via signed-in user (afari.nunya@gmail.com)
+[debug] [2026-03-07T14:41:08.347Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:08.348Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:08.352Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-03-07T14:41:09.869Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-03-07T14:41:19.218Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T14:41:19.227Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase deploy --only firestore:rules --project excel-quiz-app-28d21 --config /tmp/firebase-firestore-rules.json --non-interactive
+[debug] [2026-03-07T14:41:19.231Z] CLI Version:   15.9.0
+[debug] [2026-03-07T14:41:19.235Z] Platform:      darwin
+[debug] [2026-03-07T14:41:19.235Z] Node Version:  v25.6.1
+[debug] [2026-03-07T14:41:19.236Z] Time:          Sat Mar 07 2026 14:41:19 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T14:41:19.237Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T14:41:24.321Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-07T14:41:24.327Z] > authorizing via signed-in user (afari.nunya@gmail.com)
+[debug] [2026-03-07T14:41:24.332Z] [iam] checking project excel-quiz-app-28d21 for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-03-07T14:41:24.342Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:24.342Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:24.351Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions [none]
+[debug] [2026-03-07T14:41:24.352Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions  x-goog-user-project=excel-quiz-app-28d21
+[debug] [2026-03-07T14:41:24.353Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-03-07T14:41:26.266Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions 200
+[debug] [2026-03-07T14:41:26.266Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'excel-quiz-app-28d21'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-03-07T14:41:26.284Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:26.285Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:26.285Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-28d21/services/firestore.googleapis.com [none]
+[debug] [2026-03-07T14:41:26.287Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-28d21/services/firestore.googleapis.com  x-goog-user-project=excel-quiz-app-28d21
+[debug] [2026-03-07T14:41:27.932Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-28d21/services/firestore.googleapis.com 200
+[debug] [2026-03-07T14:41:27.932Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-28d21/services/firestore.googleapis.com [omitted]
+[warn] ⚠  firestore: missing required API firestore.googleapis.com. Enabling now... 
+[debug] [2026-03-07T14:41:27.935Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:27.935Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:27.935Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-28d21/services/firestore.googleapis.com:enable [none]
+[debug] [2026-03-07T14:41:27.937Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-28d21/services/firestore.googleapis.com:enable  x-goog-user-project=excel-quiz-app-28d21
+[debug] [2026-03-07T14:41:29.519Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-28d21/services/firestore.googleapis.com:enable 200
+[debug] [2026-03-07T14:41:29.519Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/excel-quiz-app-28d21/services/firestore.googleapis.com:enable [omitted]
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-03-07T14:41:39.579Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:39.579Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:39.580Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default) [none]
+[debug] [2026-03-07T14:41:41.005Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default) 404
+[debug] [2026-03-07T14:41:41.005Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default) {"error":{"code":404,"message":"Project 'excel-quiz-app-28d21' or database '(default)' does not exist.","status":"NOT_FOUND"}}
+[info] i  firestore: Creating the new Firestore database (default)... 
+[debug] [2026-03-07T14:41:41.017Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:41.018Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:41.022Z] >>> [apiv2][query] POST https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases databaseId=%28default%29
+[debug] [2026-03-07T14:41:41.022Z] >>> [apiv2][body] POST https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases {"locationId":"nam5","type":"FIRESTORE_NATIVE","databaseEdition":"STANDARD","deleteProtectionState":"DELETE_PROTECTION_DISABLED","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED"}
+[debug] [2026-03-07T14:41:44.590Z] <<< [apiv2][status] POST https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases 200
+[debug] [2026-03-07T14:41:44.591Z] <<< [apiv2][body] POST https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases {"name":"projects/excel-quiz-app-28d21/databases/(default)/operations/Z0l9PUAmCZKIRtqADG8BwBAqNW1hbgQiBRA4ve3wEAbNsPKpCAsKJxo","metadata":{"@type":"type.googleapis.com/google.firestore.admin.v1.CreateDatabaseMetadata"},"response":{"@type":"type.googleapis.com/google.firestore.admin.v1.Database","name":"projects/excel-quiz-app-28d21/databases/(default)","uid":"c0016f0c-80da-4688-9209-26403d7d4967","createTime":"2026-03-07T14:41:45.118454Z","updateTime":"2026-03-07T14:41:45.118454Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-03-07T14:41:45.118454Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IN3Uz9mCjpMDMPbVztmCjpMD"}}
+[debug] [2026-03-07T14:41:44.603Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:44.603Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:41:44.605Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default)/operations/Z0l9PUAmCZKIRtqADG8BwBAqNW1hbgQiBRA4ve3wEAbNsPKpCAsKJxo [none]
+[debug] [2026-03-07T14:41:45.600Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default)/operations/Z0l9PUAmCZKIRtqADG8BwBAqNW1hbgQiBRA4ve3wEAbNsPKpCAsKJxo 200
+[debug] [2026-03-07T14:41:45.600Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default)/operations/Z0l9PUAmCZKIRtqADG8BwBAqNW1hbgQiBRA4ve3wEAbNsPKpCAsKJxo {"name":"projects/excel-quiz-app-28d21/databases/(default)/operations/Z0l9PUAmCZKIRtqADG8BwBAqNW1hbgQiBRA4ve3wEAbNsPKpCAsKJxo","metadata":{"@type":"type.googleapis.com/google.firestore.admin.v1.CreateDatabaseMetadata"},"done":true,"response":{"@type":"type.googleapis.com/google.firestore.admin.v1.Database","name":"projects/excel-quiz-app-28d21/databases/(default)","uid":"c0016f0c-80da-4688-9209-26403d7d4967","createTime":"2026-03-07T14:41:45.118454Z","updateTime":"2026-03-07T14:41:45.118454Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-03-07T14:41:45.118454Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IJny5dmCjpMDMPbVztmCjpMD"}}
+[debug] [2026-03-07T14:41:45.616Z] [rules read error] Error: ENOENT: no such file or directory, open '/tmp/firestore.rules'
+    at Object.readFileSync (node:fs:435:20)
+    at RulesDeploy.addFile (/usr/local/lib/node_modules/firebase-tools/lib/rulesDeploy.js:40:22)
+    at prepareRules (/usr/local/lib/node_modules/firebase-tools/lib/deploy/firestore/prepare.js:16:17)
+    at default_1 (/usr/local/lib/node_modules/firebase-tools/lib/deploy/firestore/prepare.js:107:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async chain (/usr/local/lib/node_modules/firebase-tools/lib/deploy/index.js:45:9)
+    at async deploy (/usr/local/lib/node_modules/firebase-tools/lib/deploy/index.js:124:9)
+[error] 
+[error] Error: Error reading rules file firestore.rules
+[debug] [2026-03-07T14:42:01.188Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T14:42:01.210Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase deploy --only firestore:rules --project excel-quiz-app-28d21 --config /tmp/firebase-firestore-rules.json --non-interactive
+[debug] [2026-03-07T14:42:01.210Z] CLI Version:   15.9.0
+[debug] [2026-03-07T14:42:01.211Z] Platform:      darwin
+[debug] [2026-03-07T14:42:01.211Z] Node Version:  v25.6.1
+[debug] [2026-03-07T14:42:01.211Z] Time:          Sat Mar 07 2026 14:42:01 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T14:42:01.211Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T14:42:05.528Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-07T14:42:05.536Z] > authorizing via signed-in user (afari.nunya@gmail.com)
+[debug] [2026-03-07T14:42:05.539Z] [iam] checking project excel-quiz-app-28d21 for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-03-07T14:42:05.550Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:05.550Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:05.557Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions [none]
+[debug] [2026-03-07T14:42:05.557Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions  x-goog-user-project=excel-quiz-app-28d21
+[debug] [2026-03-07T14:42:05.558Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-03-07T14:42:07.138Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions 200
+[debug] [2026-03-07T14:42:07.138Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'excel-quiz-app-28d21'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-03-07T14:42:07.164Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:07.164Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:07.164Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default) [none]
+[debug] [2026-03-07T14:42:08.644Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default) 200
+[debug] [2026-03-07T14:42:08.645Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default) {"name":"projects/excel-quiz-app-28d21/databases/(default)","uid":"c0016f0c-80da-4688-9209-26403d7d4967","createTime":"2026-03-07T14:41:45.118454Z","updateTime":"2026-03-07T14:41:45.118454Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-03-07T14:41:45.118454Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IIaeiOWCjpMDMPbVztmCjpMD"}
+[info] i  cloud.firestore: checking /Users/kwame/Desktop/excel-quiz-app/firestore.rules for compilation errors... 
+[debug] [2026-03-07T14:42:08.653Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:08.653Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:08.653Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21:test [none]
+[debug] [2026-03-07T14:42:08.653Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21:test [omitted]
+[debug] [2026-03-07T14:42:10.181Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21:test 200
+[debug] [2026-03-07T14:42:10.181Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21:test {}
+[info] ✔  cloud.firestore: rules file /Users/kwame/Desktop/excel-quiz-app/firestore.rules compiled successfully 
+[debug] [2026-03-07T14:42:10.187Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:10.188Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:10.196Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases pageSize=10&pageToken=
+[debug] [2026-03-07T14:42:10.836Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases 200
+[debug] [2026-03-07T14:42:10.836Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases {}
+[info] i  firestore: uploading rules /Users/kwame/Desktop/excel-quiz-app/firestore.rules... 
+[debug] [2026-03-07T14:42:10.842Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:10.850Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:10.850Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/rulesets [none]
+[debug] [2026-03-07T14:42:10.850Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/rulesets [omitted]
+[debug] [2026-03-07T14:42:11.857Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/rulesets 200
+[debug] [2026-03-07T14:42:11.858Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/rulesets {"name":"projects/excel-quiz-app-28d21/rulesets/da4fb1c2-b9d7-4080-80d0-55d843d26241","source":{"files":[{"content":"rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    function isSignedIn() {\n      return request.auth != null;\n    }\n\n    function isAdmin() {\n      return isSignedIn()\n        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))\n        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;\n    }\n    \n    // Users collection - users can only read/write their own data\n    match /users/{userId} {\n      allow read, write: if isSignedIn() && request.auth.uid == userId;\n    }\n\n    // Admin membership docs\n    match /admins/{adminId} {\n      allow read: if isSignedIn() && request.auth.uid == adminId;\n      allow write: if false;\n    }\n    \n    // Questions collection - read public, write only for admins\n    match /questions/{questionId} {\n      allow read: if true; // Public access for quiz questions\n      allow write: if isAdmin();\n    }\n    \n    // Quiz attempts - users can create and read their own attempts\n    match /quizAttempts/{attemptId} {\n      allow create: if isSignedIn();\n      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;\n      allow update, delete: if false; // Prevent modification of quiz attempts\n    }\n    \n    // Training materials - read public, write only for admins\n    match /trainingMaterials/{materialId} {\n      allow read: if true; // Public access for training materials\n      allow write: if isAdmin();\n    }\n  }\n}\n","name":"/Users/kwame/Desktop/excel-quiz-app/firestore.rules"}]},"createTime":"2026-03-07T14:42:12.333116Z","metadata":{"services":["cloud.firestore"]}}
+[debug] [2026-03-07T14:42:11.858Z] [rules] created ruleset projects/excel-quiz-app-28d21/rulesets/da4fb1c2-b9d7-4080-80d0-55d843d26241
+[debug] [2026-03-07T14:42:11.859Z] [rules] releasing cloud.firestore/(default) with ruleset projects/excel-quiz-app-28d21/rulesets/da4fb1c2-b9d7-4080-80d0-55d843d26241
+[debug] [2026-03-07T14:42:11.861Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:11.861Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:11.863Z] >>> [apiv2][query] PATCH https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases/cloud.firestore/(default) [none]
+[debug] [2026-03-07T14:42:11.863Z] >>> [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases/cloud.firestore/(default) {"release":{"name":"projects/excel-quiz-app-28d21/releases/cloud.firestore/(default)","rulesetName":"projects/excel-quiz-app-28d21/rulesets/da4fb1c2-b9d7-4080-80d0-55d843d26241"}}
+[debug] [2026-03-07T14:42:12.214Z] <<< [apiv2][status] PATCH https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases/cloud.firestore/(default) 404
+[debug] [2026-03-07T14:42:12.215Z] <<< [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases/cloud.firestore/(default) {"error":{"code":404,"message":"Requested entity was not found.","status":"NOT_FOUND"}}
+[debug] [2026-03-07T14:42:12.219Z] [rules] ruleset update failed, attempting to create instead
+[debug] [2026-03-07T14:42:12.220Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:12.220Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:12.221Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases [none]
+[debug] [2026-03-07T14:42:12.222Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases {"name":"projects/excel-quiz-app-28d21/releases/cloud.firestore/(default)","rulesetName":"projects/excel-quiz-app-28d21/rulesets/da4fb1c2-b9d7-4080-80d0-55d843d26241"}
+[debug] [2026-03-07T14:42:13.239Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases 200
+[debug] [2026-03-07T14:42:38.651Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T14:42:38.658Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase auth:export /tmp/firebase-users.json --format=json --project excel-quiz-app-28d21 --non-interactive
+[debug] [2026-03-07T14:42:38.660Z] CLI Version:   15.9.0
+[debug] [2026-03-07T14:42:38.660Z] Platform:      darwin
+[debug] [2026-03-07T14:42:38.660Z] Node Version:  v25.6.1
+[debug] [2026-03-07T14:42:38.661Z] Time:          Sat Mar 07 2026 14:42:38 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T14:42:38.661Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T14:42:39.682Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-07T14:42:39.687Z] > authorizing via signed-in user (afari.nunya@gmail.com)
+[debug] [2026-03-07T14:42:39.689Z] [iam] checking project excel-quiz-app-28d21 for permissions ["firebase.projects.get","firebaseauth.users.get"]
+[debug] [2026-03-07T14:42:39.697Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:39.698Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:39.708Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions [none]
+[debug] [2026-03-07T14:42:39.709Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions  x-goog-user-project=excel-quiz-app-28d21
+[debug] [2026-03-07T14:42:39.709Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions {"permissions":["firebase.projects.get","firebaseauth.users.get"]}
+[debug] [2026-03-07T14:42:41.421Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions 200
+[debug] [2026-03-07T14:42:41.422Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions {"permissions":["firebase.projects.get","firebaseauth.users.get"]}
+[info] Exporting accounts to /tmp/firebase-users.json
+[debug] [2026-03-07T14:42:41.433Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:41.434Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T14:42:41.435Z] >>> [apiv2][query] POST https://www.googleapis.com/identitytoolkit/v3/relyingparty/downloadAccount [none]
+[debug] [2026-03-07T14:42:41.436Z] >>> [apiv2][body] POST https://www.googleapis.com/identitytoolkit/v3/relyingparty/downloadAccount {"targetProjectId":"excel-quiz-app-28d21","maxResults":1000}
+[debug] [2026-03-07T14:42:42.444Z] <<< [apiv2][status] POST https://www.googleapis.com/identitytoolkit/v3/relyingparty/downloadAccount 400
+[debug] [2026-03-07T14:42:42.466Z] <<< [apiv2][body] POST https://www.googleapis.com/identitytoolkit/v3/relyingparty/downloadAccount [omitted]
+[error] 
+[error] Error: Request to https://www.googleapis.com/identitytoolkit/v3/relyingparty/downloadAccount had HTTP Error: 400, CONFIGURATION_NOT_FOUND
+[debug] [2026-03-07T14:42:42.477Z] Error Context: {
+  "body": {
+    "error": {
+      "code": 400,
+      "message": "CONFIGURATION_NOT_FOUND",
+      "errors": [
+        {
+          "message": "CONFIGURATION_NOT_FOUND",
+          "domain": "global",
+          "reason": "invalid"
+        }
+      ]
+    }
+  },
+  "response": {
+    "statusCode": 400
+  }
+}
+[debug] [2026-03-07T15:20:19.085Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T15:20:19.108Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase apps:list WEB --project excel-quiz-app-28d21
+[debug] [2026-03-07T15:20:19.110Z] CLI Version:   15.9.0
+[debug] [2026-03-07T15:20:19.110Z] Platform:      darwin
+[debug] [2026-03-07T15:20:19.110Z] Node Version:  v25.6.1
+[debug] [2026-03-07T15:20:19.110Z] Time:          Sat Mar 07 2026 15:20:19 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T15:20:19.111Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T15:20:20.152Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-07T15:20:20.161Z] > authorizing via signed-in user (afari.nunya@gmail.com)
+[debug] [2026-03-07T15:20:20.174Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T15:20:20.174Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T15:20:20.204Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/excel-quiz-app-28d21/webApps pageSize=100
+[debug] [2026-03-07T15:20:19.085Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T15:20:19.108Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase apps:sdkconfig WEB 1:1092343234478:web:3bfcec50a096ce592ed23f --project excel-quiz-app-28d21
+[debug] [2026-03-07T15:20:19.109Z] CLI Version:   15.9.0
+[debug] [2026-03-07T15:20:19.109Z] Platform:      darwin
+[debug] [2026-03-07T15:20:19.110Z] Node Version:  v25.6.1
+[debug] [2026-03-07T15:20:19.110Z] Time:          Sat Mar 07 2026 15:20:19 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T15:20:19.110Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T15:20:19.989Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-07T15:20:20.019Z] > authorizing via signed-in user (afari.nunya@gmail.com)
+[debug] [2026-03-07T15:20:20.107Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T15:20:20.108Z] Checked if tokens are valid: true, expires at: 1772898029831
+[debug] [2026-03-07T15:20:20.118Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:1092343234478:web:3bfcec50a096ce592ed23f/config [none]
+[debug] [2026-03-07T15:20:21.456Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/excel-quiz-app-28d21/webApps 200
+[debug] [2026-03-07T15:20:21.862Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:1092343234478:web:3bfcec50a096ce592ed23f/config 200
+[debug] [2026-03-07T16:01:20.508Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T16:01:20.530Z] Command:       /usr/local/Cellar/node/25.6.1/bin/node /usr/local/bin/firebase deploy --only firestore:rules --non-interactive
+[debug] [2026-03-07T16:01:20.530Z] CLI Version:   15.9.0
+[debug] [2026-03-07T16:01:20.530Z] Platform:      darwin
+[debug] [2026-03-07T16:01:20.531Z] Node Version:  v25.6.1
+[debug] [2026-03-07T16:01:20.531Z] Time:          Sat Mar 07 2026 16:01:20 GMT+0000 (Greenwich Mean Time)
+[debug] [2026-03-07T16:01:20.531Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T16:01:25.674Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-07T16:01:25.679Z] > authorizing via signed-in user (afari.nunya@gmail.com)
+[debug] [2026-03-07T16:01:25.680Z] [iam] checking project excel-quiz-app-28d21 for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-03-07T16:01:25.693Z] Checked if tokens are valid: false, expires at: 1772898029831
+[debug] [2026-03-07T16:01:25.694Z] Checked if tokens are valid: false, expires at: 1772898029831
+[debug] [2026-03-07T16:01:25.702Z] > refreshing access token with scopes: []
+[debug] [2026-03-07T16:01:25.720Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-03-07T16:01:25.720Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-03-07T16:01:26.655Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-03-07T16:01:26.656Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-03-07T16:01:26.708Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions [none]
+[debug] [2026-03-07T16:01:26.708Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions  x-goog-user-project=excel-quiz-app-28d21
+[debug] [2026-03-07T16:01:26.708Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-03-07T16:01:28.416Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions 200
+[debug] [2026-03-07T16:01:28.416Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/excel-quiz-app-28d21:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'excel-quiz-app-28d21'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-03-07T16:01:28.436Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:28.437Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:28.437Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default) [none]
+[debug] [2026-03-07T16:01:29.779Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default) 200
+[debug] [2026-03-07T16:01:29.779Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/excel-quiz-app-28d21/databases/(default) {"name":"projects/excel-quiz-app-28d21/databases/(default)","uid":"c0016f0c-80da-4688-9209-26403d7d4967","createTime":"2026-03-07T14:41:45.118454Z","updateTime":"2026-03-07T14:41:45.118454Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-03-07T15:01:30.902462Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IJra08OUjpMDMNnHxqWFjpMD"}
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2026-03-07T16:01:29.789Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:29.789Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:29.789Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21:test [none]
+[debug] [2026-03-07T16:01:29.790Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21:test [omitted]
+[debug] [2026-03-07T16:01:31.397Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21:test 200
+[debug] [2026-03-07T16:01:31.398Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21:test {}
+[info] ✔  cloud.firestore: rules file firestore.rules compiled successfully 
+[debug] [2026-03-07T16:01:31.430Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:31.430Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:31.434Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases pageSize=10&pageToken=
+[debug] [2026-03-07T16:01:31.931Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases 200
+[debug] [2026-03-07T16:01:31.931Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases {"releases":[{"name":"projects/excel-quiz-app-28d21/releases/cloud.firestore","rulesetName":"projects/excel-quiz-app-28d21/rulesets/da4fb1c2-b9d7-4080-80d0-55d843d26241","createTime":"2026-03-07T14:42:13.759125Z","updateTime":"2026-03-07T14:42:13.759125Z"}]}
+[debug] [2026-03-07T16:01:31.932Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:31.932Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:31.932Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/rulesets/da4fb1c2-b9d7-4080-80d0-55d843d26241 [none]
+[debug] [2026-03-07T16:01:32.761Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/rulesets/da4fb1c2-b9d7-4080-80d0-55d843d26241 200
+[debug] [2026-03-07T16:01:32.763Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/rulesets/da4fb1c2-b9d7-4080-80d0-55d843d26241 [omitted]
+[info] i  firestore: uploading rules firestore.rules... 
+[debug] [2026-03-07T16:01:32.771Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:32.772Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:32.772Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/rulesets [none]
+[debug] [2026-03-07T16:01:32.772Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/rulesets [omitted]
+[debug] [2026-03-07T16:01:33.730Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/rulesets 200
+[debug] [2026-03-07T16:01:33.731Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/rulesets {"name":"projects/excel-quiz-app-28d21/rulesets/cb03ea1f-ce82-4bc7-9268-19a4951aa609","source":{"files":[{"content":"rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    function isSignedIn() {\n      return request.auth != null;\n    }\n\n    function isAdmin() {\n      return isSignedIn()\n        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))\n        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;\n    }\n    \n    // Users collection - users can only read/write their own data\n    match /users/{userId} {\n      allow read, write: if isSignedIn() && request.auth.uid == userId;\n    }\n\n    // Admin membership docs\n    match /admins/{adminId} {\n      allow read: if isSignedIn() && request.auth.uid == adminId;\n      allow write: if false;\n    }\n    \n    // Questions collection - read public, write only for admins\n    match /questions/{questionId} {\n      allow read: if true; // Public access for quiz questions\n      allow write: if isAdmin();\n    }\n    \n    // Quiz attempts - users can create and read their own attempts\n    match /quizAttempts/{attemptId} {\n      allow create: if isSignedIn();\n      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;\n      allow update, delete: if false; // Prevent modification of quiz attempts\n    }\n    \n    // Training materials - read public, write only for admins\n    match /trainingMaterials/{materialId} {\n      allow read: if true; // Public access for training materials\n      allow write: if isAdmin();\n    }\n  }\n}\n","name":"firestore.rules"}]},"createTime":"2026-03-07T16:01:34.823311Z","metadata":{"services":["cloud.firestore"]}}
+[debug] [2026-03-07T16:01:33.731Z] [rules] created ruleset projects/excel-quiz-app-28d21/rulesets/cb03ea1f-ce82-4bc7-9268-19a4951aa609
+[debug] [2026-03-07T16:01:33.732Z] [rules] releasing cloud.firestore/(default) with ruleset projects/excel-quiz-app-28d21/rulesets/cb03ea1f-ce82-4bc7-9268-19a4951aa609
+[debug] [2026-03-07T16:01:33.733Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:33.733Z] Checked if tokens are valid: true, expires at: 1772902885657
+[debug] [2026-03-07T16:01:33.733Z] >>> [apiv2][query] PATCH https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases/cloud.firestore/(default) [none]
+[debug] [2026-03-07T16:01:33.733Z] >>> [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases/cloud.firestore/(default) {"release":{"name":"projects/excel-quiz-app-28d21/releases/cloud.firestore/(default)","rulesetName":"projects/excel-quiz-app-28d21/rulesets/cb03ea1f-ce82-4bc7-9268-19a4951aa609"}}
+[debug] [2026-03-07T16:01:34.790Z] <<< [apiv2][status] PATCH https://firebaserules.googleapis.com/v1/projects/excel-quiz-app-28d21/releases/cloud.firestore/(default) 200

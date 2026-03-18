@@ -8,48 +8,121 @@
   --excel-light-green: #c6e0b4;
   --excel-gray: #f3f3f3;
   --excel-dark-gray: #202020;
+  --brand-navy: #0f2744;
+  --brand-navy-hover: #12365a;
+  --brand-border: #c9d9ee;
+  --brand-text: #183251;
 }
 
 body {
-  @apply bg-excel-gray text-excel-dark-gray;
+  @apply bg-[#eef2f6] text-excel-dark-gray;
 }
 
 .btn-primary {
-  @apply bg-excel-green hover:bg-excel-dark-green text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg;
+  @apply inline-flex items-center justify-center rounded-lg bg-[var(--brand-navy)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[var(--brand-navy-hover)] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 md:px-6 md:py-3;
 }
 
 .btn-secondary {
-  @apply bg-white hover:bg-gray-100 text-excel-dark-gray border border-gray-300 font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+  @apply inline-flex items-center justify-center rounded-lg border border-[var(--brand-border)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--brand-text)] transition-colors duration-200 hover:bg-[#f3f7ff] hover:border-[#aac0de] md:px-6 md:py-3;
+}
+
+.btn-hero-primary {
+  @apply inline-flex items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[var(--brand-navy)] shadow-md transition-colors duration-200 hover:bg-[#edf4ff] disabled:cursor-not-allowed disabled:opacity-70 md:px-6 md:py-3;
+}
+
+.btn-hero-secondary {
+  @apply inline-flex items-center justify-center rounded-lg border border-white/45 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-70 md:px-6 md:py-3;
 }
 
 .card {
-  @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
+  @apply rounded-2xl border border-[#d9e3ef] bg-white p-6 shadow-sm;
 }
 
 .progress-bar {
-  @apply w-full bg-gray-200 rounded-full h-2;
+  @apply w-full bg-gray-200 rounded-full h-3;
 }
 
 .progress-fill {
-  @apply h-2 rounded-full transition-all duration-300;
+  @apply h-3 rounded-full transition-all duration-500 ease-out;
+}
+
+.stat-chip {
+  @apply inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium;
+}
+
+.excel-grid-bg {
+  background-color: #eef4f0;
+  background-image:
+    linear-gradient(to right, rgba(33, 115, 70, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(33, 115, 70, 0.08) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.quiz-card {
+  @apply border border-gray-100;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
 }
 
 .quiz-question {
-  @apply text-lg font-semibold text-gray-800 mb-4;
+  @apply text-2xl font-semibold text-excel-dark-gray leading-relaxed;
 }
 
 .quiz-option {
-  @apply w-full text-left p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer;
+  @apply w-full text-left p-4 border border-[#d4e0d8] rounded-lg hover:bg-[#f7faf8] transition-all duration-200 cursor-pointer;
 }
 
 .quiz-option.selected {
-  @apply bg-excel-light-green border-excel-green;
+  @apply border-2 border-excel-green bg-excel-light-green/20 shadow-lg transform scale-[1.01] ring-2 ring-excel-green ring-opacity-40;
 }
 
 .quiz-option.correct {
-  @apply bg-green-100 border-green-400;
+  @apply border-2 border-emerald-600 bg-emerald-100 text-emerald-900 shadow-lg font-semibold;
 }
 
 .quiz-option.wrong {
-  @apply bg-red-100 border-red-400;
+  @apply border-2 border-orange-600 bg-orange-100 text-orange-900 shadow-lg font-semibold;
+}
+
+.quiz-option:disabled {
+  @apply cursor-default;
+}
+
+.quiz-option.correct:hover,
+.quiz-option.wrong:hover {
+  @apply shadow-xl;
+}
+
+.option-letter {
+  @apply inline-flex h-8 min-w-8 shrink-0 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-xs font-bold shadow-sm md:h-10 md:min-w-10 md:text-sm;
+}
+
+.option-content {
+  @apply grid grid-cols-[1.25rem_2.5rem_minmax(0,1fr)] items-start gap-3;
+}
+
+.option-text {
+  @apply min-w-0 text-left leading-relaxed break-words;
+}
+
+.option-radio {
+  @apply mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-400 bg-white transition-colors;
+}
+
+.option-radio-dot {
+  @apply h-2.5 w-2.5 rounded-full bg-excel-green opacity-0 transition-opacity;
+}
+
+.quiz-option.selected .option-radio,
+.quiz-option.correct .option-radio {
+  @apply border-excel-green;
+}
+
+.quiz-option.wrong .option-radio {
+  @apply border-orange-500;
+}
+
+.quiz-option.selected .option-radio-dot,
+.quiz-option.correct .option-radio-dot,
+.quiz-option.wrong .option-radio-dot {
+  @apply opacity-100;
 }

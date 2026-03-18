@@ -1,42 +1,174 @@
 'use client'
 
 import { useAuth } from '@/lib/auth'
-import { signInWithGoogle, signOutUser } from '@/lib/firebase'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { FirebaseError } from 'firebase/app'
+import { db } from '@/lib/firebase'
+import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore'
+import type { Review } from '@/types'
+import { addDoc, serverTimestamp } from 'firebase/firestore'
+
+const capabilityCards = [
+  {
+    title: 'Scenario-Driven Questions',
+    description: 'Each item mirrors real spreadsheet tasks used in reporting, analysis, and operations.',
+  },
+  {
+    title: 'Actionable Review',
+    description: 'Category-level scoring pinpoints where each candidate needs targeted improvement.',
+  },
+  {
+    title: 'Role-Secured Imports',
+    description: 'Question uploads are restricted to authorized admins with Firestore-enforced access.',
+  },
+  {
+    title: 'Randomized Attempts',
+    description: 'Question and answer order are shuffled per session to reduce memorized sequencing.',
+  },
+]
+
+const processSteps = [
+  'Authenticate and launch a timed-ready quiz flow.',
+  'Answer 20 questions in 4 blocks of 5 questions.',
+  'Review question-level outcomes and overall score.',
+  'Use category insights to guide focused retraining.',
+]
+
+function parseReviewRecord(raw: unknown, id: string): Review | null {
+  if (!raw || typeof raw !== 'object') {
+    return null
+  }
+
+  const data = raw as Partial<Review> & { createdAt?: unknown }
+  const rating = typeof data.rating === 'number' ? data.rating : 0
+  const comment = typeof data.comment === 'string' ? data.comment : ''
+  const displayName = typeof data.displayName === 'string' ? data.displayName : 'Participant'
+
+  if (!comment) {
+    return null
+  }
+
+  const createdAt =
+    data.createdAt && typeof data.createdAt === 'object' && 'toDate' in data.createdAt
+      ? (data.createdAt as { toDate: () => Date }).toDate()
+      : new Date()
+
+  return {
+    id,
+    userId: typeof data.userId === 'string' ? data.userId : 'unknown',
+    displayName,
+    rating,
+    comment,
+    createdAt,
+  }
+}
 
 export default function Home() {
-  const { user, loading } = useAuth()
+  const { user, loading, signIn, signOut } = useAuth()
   const router = useRouter()
   const [isSigningIn, setIsSigningIn] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+  const [featuredReviews, setFeaturedReviews] = useState<Review[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(true)
 
   const handleStartQuiz = () => {
     if (!user) {
-      handleSignIn()
-    } else {
-      router.push('/quiz')
+      void handleSignIn()
+      return
     }
+
+    router.push('/quiz/survey')
   }
 
   const handleSignIn = async () => {
     setIsSigningIn(true)
     try {
-      await signInWithGoogle()
-      router.push('/quiz')
+      await signIn()
+      router.push('/quiz/survey')
     } catch (error) {
-      console.error('Sign in error:', error)
+      console.error('Sign in failed:', error)
+      alert(getAuthErrorMessage(error))
     } finally {
       setIsSigningIn(false)
     }
   }
 
   const handleSignOut = async () => {
+    setIsSigningOut(true)
     try {
-      await signOutUser()
+      await signOut()
     } catch (error) {
-      console.error('Sign out error:', error)
+      console.error('Sign out failed:', error)
+      alert('Sign out failed. Please try again.')
+    } finally {
+      setIsSigningOut(false)
     }
   }
+
+  const getAuthErrorMessage = (error: unknown) => {
+    if (error instanceof FirebaseError) {
+      switch (error.code) {
+        case 'auth/operation-not-allowed':
+          return 'Google sign-in is not enabled in Firebase Authentication. Enable Google provider in Firebase Console.'
+        case 'auth/popup-blocked':
+          return 'Sign-in popup was blocked. Please allow popups and try again.'
+        case 'auth/popup-closed-by-user':
+          return 'Sign-in popup was closed before completion. Please try again.'
+        case 'auth/unauthorized-domain':
+          return 'This domain is not authorized for Firebase Auth. Add localhost to Authorized domains.'
+        default:
+          return `Sign in failed: ${error.code}`
+      }
+    }
+
+    return 'Sign in failed. Please try again.'
+  }
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const reviewsQuery = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'), limit(3))
+        const snapshot = await getDocs(reviewsQuery)
+        const reviews = snapshot.docs
+          .map((doc) => parseReviewRecord(doc.data(), doc.id))
+          .filter((review): review is Review => review !== null)
+        setFeaturedReviews(reviews)
+      } catch (error) {
+        console.error('Failed to load reviews:', error)
+      } finally {
+        setReviewsLoading(false)
+      }
+    }
+
+    void fetchReviews()
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const params = new URLSearchParams(window.location.search)
+    const source = params.get('source')
+    if (!source) {
+      return
+    }
+
+    const track = async () => {
+      try {
+        await addDoc(collection(db, 'analyticsEvents'), {
+          type: 'landing_visit',
+          source,
+          createdAt: serverTimestamp(),
+        })
+      } catch (error) {
+        console.error('Failed to log landing visit:', error)
+      }
+    }
+
+    void track()
+  }, [])
 
   if (loading) {
     return (
@@ -47,83 +179,185 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-excel-green to-excel-light-green">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
-            <h1 className="text-5xl font-bold text-excel-dark-gray mb-4">
-              Excel Mastery Quiz
-            </h1>
-            <p className="text-xl text-gray-600 mb-8">
-              Test your Excel knowledge and improve your skills with our comprehensive quiz system
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <div className="text-3xl mb-2">📊</div>
-                <h3 className="font-semibold mb-2">Comprehensive Quiz</h3>
-                <p className="text-sm text-gray-600">10-20 questions covering all Excel topics</p>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <div className="text-3xl mb-2">🎯</div>
-                <h3 className="font-semibold mb-2">Personalized Learning</h3>
-                <p className="text-sm text-gray-600">Get recommendations based on your weak areas</p>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <div className="text-3xl mb-2">📈</div>
-                <h3 className="font-semibold mb-2">Track Progress</h3>
-                <p className="text-sm text-gray-600">Monitor your improvement over time</p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[#eef2f6] text-[#152238]">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#0f2744] via-[#144d6a] to-[#1f6f6d]">
+        <div className="pointer-events-none absolute -top-20 -right-20 h-72 w-72 rounded-full bg-[#5dd6cf]/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-16 h-80 w-80 rounded-full bg-[#8fb8ff]/20 blur-3xl" />
 
-            <div className="space-y-4">
-              {!user ? (
+        <div className="container mx-auto px-4 pb-24 pt-8 md:pt-10">
+          <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-2 rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-white backdrop-blur-sm sm:flex-row sm:items-center sm:gap-4">
+            <p className="text-sm font-semibold tracking-wide">Excel Competency Program</p>
+            <p className="text-xs text-[#d3e6ff]">Corporate Assessment Platform</p>
+          </div>
+
+          <div className="mx-auto mt-8 grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+            <div className="text-white">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#c5e6ff]">Readiness First</p>
+              <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight md:text-6xl">
+                Professional Excel Testing for Corporate Teams
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-[#d5ebff] md:text-base">
+                Launch structured assessments, benchmark spreadsheet skills, and identify capability gaps before they affect reporting quality.
+              </p>
+
+              <div className="mt-7 flex flex-wrap gap-3">
                 <button
                   onClick={handleStartQuiz}
                   disabled={isSigningIn}
-                  className="btn-primary px-8 py-3 text-lg font-bold"
+                  className="btn-hero-primary w-full sm:w-auto"
                 >
-                  {isSigningIn ? 'Signing in...' : 'Start Quiz'}
+                  {isSigningIn ? 'Signing in...' : user ? 'Launch Assessment' : 'Sign in & Launch Assessment'}
                 </button>
-              ) : (
-                <div className="space-y-4">
-                  <div className="text-left bg-gray-50 p-4 rounded-lg">
-                    <p className="font-semibold">Welcome back, {user.displayName}!</p>
-                    <p className="text-sm text-gray-600">Ready to test your Excel skills?</p>
-                  </div>
-                  <div className="flex gap-4 justify-center">
-                    <button
-                      onClick={handleStartQuiz}
-                      className="btn-primary px-8 py-3 text-lg font-bold"
-                    >
-                      Continue Quiz
-                    </button>
-                    <button
-                      onClick={handleSignOut}
-                      className="btn-secondary px-6 py-3"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+                {user && (
+                  <button
+                    onClick={() => router.push('/quiz/results')}
+                    className="btn-hero-secondary w-full sm:w-auto"
+                  >
+                    View Latest Results
+                  </button>
+                )}
+                {user && (
+                  <button
+                    onClick={() => void handleSignOut()}
+                    disabled={isSigningOut}
+                    className="btn-hero-secondary w-full sm:w-auto"
+                  >
+                    {isSigningOut ? 'Signing out...' : 'Sign Out'}
+                  </button>
+                )}
+              </div>
 
-          {user && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="card">
-                <h3 className="text-xl font-semibold mb-4">Your Progress</h3>
-                <p className="text-gray-600">Track your quiz attempts and improvement</p>
-              </div>
-              <div className="card">
-                <h3 className="text-xl font-semibold mb-4">Training Resources</h3>
-                <p className="text-gray-600">Access personalized learning materials</p>
+              <div className="mt-8 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
+                <article className="rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
+                  <p className="text-2xl font-bold">20</p>
+                  <p className="text-xs text-[#d5ebff]">Questions Per Attempt</p>
+                </article>
+                <article className="rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
+                  <p className="text-2xl font-bold">4</p>
+                  <p className="text-xs text-[#d5ebff]">Core Skill Domains</p>
+                </article>
+                <article className="rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
+                  <p className="text-2xl font-bold">RBAC</p>
+                  <p className="text-xs text-[#d5ebff]">Admin-Secured Upload</p>
+                </article>
               </div>
             </div>
-          )}
+
+            <aside className="rounded-2xl border border-white/20 bg-white/90 p-5 shadow-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#4f6592]">Assessment Snapshot</p>
+              <h2 className="mt-2 text-xl font-semibold text-[#1a2e49]">Program Structure</h2>
+              <p className="mt-2 text-sm text-[#4f6483]">Participants complete 4 progressive blocks with randomized options on each question.</p>
+
+              <div className="mt-4 space-y-3">
+                {[
+                  { label: 'Block 1', note: 'Questions 1-5 · Fundamentals' },
+                  { label: 'Block 2', note: 'Questions 6-10 · Daily Workflow' },
+                  { label: 'Block 3', note: 'Questions 11-15 · Analysis Skills' },
+                  { label: 'Block 4', note: 'Questions 16-20 · Applied Judgment' },
+                ].map((block) => (
+                  <div key={block.label} className="rounded-lg border border-[#d7e0ef] bg-white p-3">
+                    <p className="text-sm font-semibold text-[#1a2e49]">{block.label}</p>
+                    <p className="text-xs text-[#5f7390]">{block.note}</p>
+                  </div>
+                ))}
+              </div>
+
+              {user ? (
+                <div className="mt-5 space-y-2">
+                  <button onClick={() => router.push('/admin')} className="btn-secondary w-full">
+                    Open Admin Workspace
+                  </button>
+                </div>
+              ) : (
+                <p className="mt-5 rounded-lg border border-[#d8e2f4] bg-[#f3f7ff] px-3 py-2 text-xs text-[#4d6489]">
+                  Sign in with Google to start the assessment and save attempt history.
+                </p>
+              )}
+            </aside>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <main className="-mt-16 pb-12">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-6xl space-y-6">
+            <section className="rounded-2xl border border-[#d9e3ef] bg-white p-6 shadow-sm md:p-7">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {capabilityCards.map((card) => (
+                  <article key={card.title} className="rounded-xl border border-[#dbe5f1] bg-[#f9fbff] p-4">
+                    <h3 className="text-base font-semibold text-[#1a2e49]">{card.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-[#5a6f8a]">{card.description}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-[#d9e3ef] bg-white p-6 shadow-sm md:p-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5f7491]">Execution Flow</p>
+              <h2 className="mt-2 text-2xl font-semibold text-[#142842]">How This Assessment Runs</h2>
+              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                {processSteps.map((step, index) => (
+                  <div key={step} className="rounded-lg border border-[#dbe5f1] bg-[#f8fbff] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[#6780a2]">Step {index + 1}</p>
+                    <p className="mt-1 text-sm font-medium text-[#2a4464]">{step}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {user && (
+              <section className="rounded-2xl border border-[#d9e3ef] bg-white p-6 shadow-sm md:p-7">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5f7491]">Active User</p>
+                <h2 className="mt-2 text-2xl font-semibold text-[#142842]">
+                  {user.displayName || user.email || 'Signed-in User'}
+                </h2>
+                <p className="mt-2 text-sm text-[#5f7491]">Resume assessment flow, inspect outcomes, or manage question content.</p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button onClick={() => router.push('/quiz/survey')} className="btn-primary w-full sm:w-auto">
+                    Go To Quiz
+                  </button>
+                  <button onClick={() => router.push('/quiz/results')} className="btn-secondary w-full sm:w-auto">
+                    Open Results
+                  </button>
+                  <button onClick={() => router.push('/admin')} className="btn-secondary w-full sm:w-auto">
+                    Admin Dashboard
+                  </button>
+                </div>
+              </section>
+            )}
+
+            <section className="rounded-2xl border border-[#d9e3ef] bg-white p-6 shadow-sm md:p-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5f7491]">Participant Reviews</p>
+              <h2 className="mt-2 text-2xl font-semibold text-[#142842]">What Teams Are Saying</h2>
+              <p className="mt-2 text-sm text-[#5a6f8a]">Recent feedback from quiz participants.</p>
+
+              {reviewsLoading ? (
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  {[0, 1, 2].map((index) => (
+                    <div key={index} className="rounded-xl border border-[#dbe5f1] bg-[#f9fbff] p-4">
+                      <div className="h-3 w-24 rounded bg-[#e7edf7]" />
+                      <div className="mt-3 h-3 w-full rounded bg-[#e7edf7]" />
+                      <div className="mt-2 h-3 w-5/6 rounded bg-[#e7edf7]" />
+                    </div>
+                  ))}
+                </div>
+              ) : featuredReviews.length > 0 ? (
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  {featuredReviews.map((review) => (
+                    <article key={review.id} className="rounded-xl border border-[#dbe5f1] bg-[#f9fbff] p-4">
+                      <p className="text-sm font-semibold text-[#1a2e49]">{review.displayName}</p>
+                      <p className="mt-1 text-xs text-[#5f7390]">Rating {review.rating}/5</p>
+                      <p className="mt-3 text-sm text-[#5a6f8a]">{review.comment}</p>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-[#5a6f8a]">No reviews yet. Be the first to leave feedback.</p>
+              )}
+            </section>
+          </div>
+        </div>
+      </main>
     </div>
   )
 }

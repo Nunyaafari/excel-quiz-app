@@ -38,7 +38,7 @@ Visit `https://github.com/YOUR_USERNAME/excel-quiz-app` to confirm your code is 
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Click "Add project"
-3. Project name: `Excel Quiz App`
+3. Project name: ``
 4. Disable Google Analytics (optional)
 5. Click "Create project"
 

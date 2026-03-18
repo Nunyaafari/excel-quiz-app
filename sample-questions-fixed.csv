@@ -1,0 +1,26 @@
+text,category,option1,option2,option3,option4,correctAnswer,difficulty
+"What does the SUM function do?","Formulas","Adds all numbers in a range","Multiplies all numbers in a range","Subtracts all numbers in a range","Divides all numbers in a range",0,1
+"Which function returns the current date?","Formulas","TODAY()","NOW()","DATE()","TIME()",0,1
+"What is the keyboard shortcut for copy?","Shortcuts","Ctrl+C","Ctrl+V","Ctrl+X","Ctrl+Z",0,1
+"What is the keyboard shortcut for paste?","Shortcuts","Ctrl+V","Ctrl+C","Ctrl+X","Ctrl+Z",0,1
+"What does Ctrl+Z do?","Shortcuts","Undo","Redo","Copy","Paste",0,1
+"What is the keyboard shortcut for save?","Shortcuts","Ctrl+S","Ctrl+O","Ctrl+N","Ctrl+P",0,1
+"What does the AVERAGE function calculate?","Formulas","The mean of a range of numbers","The median of a range of numbers","The mode of a range of numbers","The sum of a range of numbers",0,2
+"What does the COUNT function do?","Formulas","Counts the number of cells that contain numbers","Counts all cells","Counts empty cells","Counts text cells",0,2
+"What is the keyboard shortcut for cut?","Shortcuts","Ctrl+X","Ctrl+C","Ctrl+V","Ctrl+Z",0,1
+"What does the MAX function return?","Formulas","The largest value in a range","The smallest value in a range","The average value in a range","The sum of values in a range",0,2
+"What does the MIN function return?","Formulas","The smallest value in a range","The largest value in a range","The average value in a range","The sum of values in a range",0,2
+"What is the keyboard shortcut for undo?","Shortcuts","Ctrl+Z","Ctrl+Y","Ctrl+X","Ctrl+V",0,1
+"What is the keyboard shortcut for redo?","Shortcuts","Ctrl+Y","Ctrl+Z","Ctrl+X","Ctrl+V",0,1
+"What does the IF function do?","Formulas","Performs a logical test and returns one value if true and another if false","Adds numbers conditionally","Counts cells conditionally","Looks up values in a table",0,3
+"What does the CONCATENATE function do?","Formulas","Joins two or more text strings into one string","Splits text into multiple cells","Converts text to uppercase","Converts text to lowercase",0,2
+"What is the keyboard shortcut for bold text?","Formatting","Ctrl+B","Ctrl+I","Ctrl+U","Ctrl+A",0,1
+"What is the keyboard shortcut for italic text?","Formatting","Ctrl+I","Ctrl+B","Ctrl+U","Ctrl+A",0,1
+"What is the keyboard shortcut for underline text?","Formatting","Ctrl+U","Ctrl+I","Ctrl+B","Ctrl+A",0,1
+"What is the keyboard shortcut to select all?","Shortcuts","Ctrl+A","Ctrl+C","Ctrl+V","Ctrl+Z",0,1
+"What does the VLOOKUP function do?","Formulas","Searches for a value in the first column of a table and returns a value in the same row from a specified column","Creates a pivot table from the selected data","Validates data entry based on specified criteria","Merges multiple cells into one",0,3
+"What does the HLOOKUP function do?","Formulas","Searches for a value in the first row of a table and returns a value in the same column from a specified row","Creates a chart from the selected data","Validates data entry based on specified criteria","Merges multiple cells into one",0,3
+"What does the INDEX function do?","Formulas","Returns the value of an element in a table or array, selected by the row and column number indexes","Searches for a value in a table","Creates a pivot table","Validates data entry",0,4
+"What does the MATCH function do?","Formulas","Searches for a specified item in a range of cells and returns the relative position of that item","Returns the value of an element in a table","Creates a chart","Validates data entry",0,4
+"What does the OFFSET function do?","Formulas","Returns a reference to a range that is a specified number of rows and columns from a given reference","Searches for a value in a table","Creates a pivot table","Validates data entry",0,4
+"What does the CHOOSE function do?","Formulas","Uses index_num to return a value from the list of value arguments","Searches for a value in a table","Creates a chart","Validates data entry",0,3

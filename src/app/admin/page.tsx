@@ -1,11 +1,12 @@
 'use client'
 
-import { ChangeEvent, useEffect, useState } from 'react'
+import { ChangeEvent, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp, where } from 'firebase/firestore'
 import { useAuth } from '@/lib/auth'
 import { db } from '@/lib/firebase'
 import { AdminStats, CSVImportResult, Question, QuizBatch, QuizLead, TrainingRequest } from '@/types'
+import { getAdminAnalyticsSnapshot, type AdminAnalyticsSnapshot } from '@/lib/admin-analytics'
 import {
   createQuestionSignature,
   downloadImportErrorsCSV,
@@ -21,10 +22,18 @@ import { Doughnut, Bar } from 'react-chartjs-2'
 
 ChartJS.register(CategoryScale, LinearScale, ArcElement, BarElement, Tooltip, Legend)
 
+type AnalyticsDetails = Pick<
+  AdminAnalyticsSnapshot,
+  'sourceDistribution' | 'landingSourceDistribution' | 'scoreBandDistribution' | 'dailyAttempts' | 'weakCategoryCounts'
+>
+
+const CHART_COLORS = ['#0f2744', '#144d6a', '#1f6f6d', '#3f86a8', '#82b8d7', '#94d2bd']
+
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<AdminStats | null>(null)
+  const [analyticsDetails, setAnalyticsDetails] = useState<AnalyticsDetails | null>(null)
   const [pageLoading, setPageLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminCheckError, setAdminCheckError] = useState<string | null>(null)
@@ -235,30 +244,34 @@ export default function AdminPage() {
         if (hasAdminAccess) {
           setLeadsLoading(true)
           setTrainingRequestsLoading(true)
-          setStats({
-            totalQuestions: 25,
-            totalUsers: 150,
-            totalQuizAttempts: 450,
-            averageScore: 72.5,
-            categoryDistribution: {
-              Formulas: 120,
-              Shortcuts: 95,
-              Charts: 85,
-              DataAnalysis: 75,
-              Formatting: 75,
-            },
-            recentActivity: [
-              { action: 'Question imported', timestamp: new Date(), user: 'admin@example.com' },
-              { action: 'User registered', timestamp: new Date(), user: 'newuser@example.com' },
-              { action: 'Quiz completed', timestamp: new Date(), user: 'user123@example.com' },
-            ],
-          })
 
-          const [leadSnapshot, batchSnapshot, requestSnapshot] = await Promise.all([
+          const [analyticsSnapshot, leadSnapshot, batchSnapshot, requestSnapshot] = await Promise.all([
+            getAdminAnalyticsSnapshot(),
             getDocs(query(collection(db, 'quizLeads'), orderBy('createdAt', 'desc'), limit(200))),
             getDocs(query(collection(db, 'quizBatches'), orderBy('createdAt', 'desc'), limit(50))),
             getDocs(query(collection(db, 'trainingRequests'), orderBy('createdAt', 'desc'), limit(200))),
           ])
+
+          if (!active) {
+            return
+          }
+
+          setStats({
+            totalQuestions: analyticsSnapshot.totalQuestions,
+            totalUsers: analyticsSnapshot.totalUsers,
+            totalQuizAttempts: analyticsSnapshot.totalQuizAttempts,
+            averageScore: analyticsSnapshot.averageScore,
+            categoryDistribution: analyticsSnapshot.categoryDistribution,
+            recentActivity: analyticsSnapshot.recentActivity,
+          })
+
+          setAnalyticsDetails({
+            sourceDistribution: analyticsSnapshot.sourceDistribution,
+            landingSourceDistribution: analyticsSnapshot.landingSourceDistribution,
+            scoreBandDistribution: analyticsSnapshot.scoreBandDistribution,
+            dailyAttempts: analyticsSnapshot.dailyAttempts,
+            weakCategoryCounts: analyticsSnapshot.weakCategoryCounts,
+          })
 
           const parsedLeads = leadSnapshot.docs
             .map((docSnap) => parseLeadRecord(docSnap.data(), docSnap.id))
@@ -398,7 +411,7 @@ export default function AdminPage() {
                     timestamp: new Date(),
                     user: user?.email || 'admin',
                   },
-                  ...previous.recentActivity.slice(0, 4),
+                  ...previous.recentActivity.slice(0, 7),
                 ],
               }
             : previous
@@ -609,6 +622,22 @@ export default function AdminPage() {
         ...previous,
       ])
 
+      setStats((previous) =>
+        previous
+          ? {
+              ...previous,
+              recentActivity: [
+                {
+                  action: `Batch created: ${trimmedName}`,
+                  timestamp: new Date(),
+                  user: user.email || user.uid,
+                },
+                ...previous.recentActivity.slice(0, 7),
+              ],
+            }
+          : previous
+      )
+
       setBatchName('')
       setBatchInvitees('')
     } catch (error) {
@@ -759,6 +788,23 @@ export default function AdminPage() {
     window.URL.revokeObjectURL(url)
   }
 
+  const categoryDistributionEntries = useMemo(
+    () => Object.entries(stats?.categoryDistribution ?? {}),
+    [stats]
+  )
+  const sourceDistributionEntries = useMemo(
+    () => Object.entries(analyticsDetails?.sourceDistribution ?? {}),
+    [analyticsDetails]
+  )
+  const landingSourceEntries = useMemo(
+    () => Object.entries(analyticsDetails?.landingSourceDistribution ?? {}),
+    [analyticsDetails]
+  )
+  const scoreBandEntries = useMemo(
+    () => Object.entries(analyticsDetails?.scoreBandDistribution ?? {}),
+    [analyticsDetails]
+  )
+
   return (
     <div className="min-h-screen bg-[#eef2f6] py-6 md:py-8">
       <div className="container mx-auto px-4">
@@ -809,7 +855,7 @@ export default function AdminPage() {
                           totalQuestions: previous.totalQuestions + 1,
                           recentActivity: [
                             { action: 'Question updated', timestamp: new Date(), user: user.email || 'admin' },
-                            ...previous.recentActivity.slice(0, 4),
+                            ...previous.recentActivity.slice(0, 7),
                           ],
                         }
                       : previous
@@ -908,19 +954,24 @@ export default function AdminPage() {
             </div>
           </section>
 
-          <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-              <h2 className="mb-4 text-2xl font-semibold text-[#142842]">Analytics</h2>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-2xl font-semibold text-[#142842]">Category Performance</h2>
+                  <p className="mt-1 text-sm text-[#5a6f8a]">Correct answers accumulated by category across quiz attempts.</p>
+                </div>
+              </div>
 
-              {stats && (
-                <div className="h-72">
+              {categoryDistributionEntries.length > 0 ? (
+                <div className="mt-4 h-72">
                   <Doughnut
                     data={{
-                      labels: Object.keys(stats.categoryDistribution),
+                      labels: categoryDistributionEntries.map(([label]) => label),
                       datasets: [
                         {
-                          data: Object.values(stats.categoryDistribution),
-                          backgroundColor: ['#0f2744', '#144d6a', '#1f6f6d', '#3f86a8', '#82b8d7'],
+                          data: categoryDistributionEntries.map(([, value]) => value),
+                          backgroundColor: categoryDistributionEntries.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]),
                           borderWidth: 0,
                         },
                       ],
@@ -936,12 +987,136 @@ export default function AdminPage() {
                     }}
                   />
                 </div>
+              ) : (
+                <EmptyAnalyticsState message="No quiz attempt category data yet." />
               )}
             </div>
 
             <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+              <h2 className="text-2xl font-semibold text-[#142842]">Attempt Sources</h2>
+              <p className="mt-1 text-sm text-[#5a6f8a]">Where completed quiz attempts are coming from.</p>
+
+              {sourceDistributionEntries.length > 0 ? (
+                <div className="mt-4 h-72">
+                  <Doughnut
+                    data={{
+                      labels: sourceDistributionEntries.map(([label]) => label),
+                      datasets: [
+                        {
+                          data: sourceDistributionEntries.map(([, value]) => value),
+                          backgroundColor: ['#0f2744', '#1f6f6d', '#82b8d7'],
+                          borderWidth: 0,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              ) : (
+                <EmptyAnalyticsState message="No completed attempt source data yet." />
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+              <h2 className="text-2xl font-semibold text-[#142842]">Daily Attempts</h2>
+              <p className="mt-1 text-sm text-[#5a6f8a]">Last 14 days of recorded quiz activity.</p>
+
+              {analyticsDetails && analyticsDetails.dailyAttempts.length > 0 ? (
+                <div className="mt-4 h-72">
+                  <Bar
+                    data={{
+                      labels: analyticsDetails.dailyAttempts.map((entry) => entry.date),
+                      datasets: [
+                        {
+                          label: 'Attempts',
+                          data: analyticsDetails.dailyAttempts.map((entry) => entry.attempts),
+                          backgroundColor: '#144d6a',
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: false } },
+                      scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 } },
+                      },
+                    }}
+                  />
+                </div>
+              ) : (
+                <EmptyAnalyticsState message="No daily attempt trend available yet." />
+              )}
+            </div>
+          </section>
+
+          <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+              <h2 className="text-2xl font-semibold text-[#142842]">Analytics Highlights</h2>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
+                  <p className="text-sm font-semibold text-[#1e3757]">Weak Categories</p>
+                  {analyticsDetails && analyticsDetails.weakCategoryCounts.length > 0 ? (
+                    <div className="mt-3 space-y-2">
+                      {analyticsDetails.weakCategoryCounts.map((entry) => (
+                        <div key={entry.category} className="flex items-center justify-between rounded-md border border-[#e2e8f2] bg-white px-3 py-2 text-sm">
+                          <span className="text-[#1e3757]">{entry.category}</span>
+                          <span className="font-semibold text-[#1e3757]">{entry.misses} misses</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-[#5a6f8a]">No weak-category trend yet.</p>
+                  )}
+                </div>
+
+                <div className="rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
+                  <p className="text-sm font-semibold text-[#1e3757]">Score Bands</p>
+                  {scoreBandEntries.length > 0 ? (
+                    <div className="mt-3 space-y-2">
+                      {scoreBandEntries.map(([band, value]) => (
+                        <div key={band} className="flex items-center justify-between rounded-md border border-[#e2e8f2] bg-white px-3 py-2 text-sm">
+                          <span className="text-[#1e3757]">{band}</span>
+                          <span className="font-semibold text-[#1e3757]">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-[#5a6f8a]">No score-band distribution yet.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
+                <p className="text-sm font-semibold text-[#1e3757]">Landing Traffic Sources</p>
+                {landingSourceEntries.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {landingSourceEntries.map(([source, value]) => (
+                      <span
+                        key={source}
+                        className="inline-flex items-center rounded-full border border-[#cfdceb] bg-white px-3 py-1 text-sm text-[#1e3757]"
+                      >
+                        {source}: {value}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-[#5a6f8a]">No landing analytics events recorded yet.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
               <h2 className="mb-4 text-2xl font-semibold text-[#142842]">Recent Activity</h2>
-              {stats && (
+              {stats && stats.recentActivity.length > 0 ? (
                 <div className="space-y-3">
                   {stats.recentActivity.map((activity, index) => (
                     <div key={index} className="flex items-center justify-between rounded-lg border border-[#dbe5f1] bg-[#f8fbff] p-3">
@@ -953,6 +1128,8 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
+              ) : (
+                <p className="text-sm text-[#5a6f8a]">No recent admin activity to display yet.</p>
               )}
             </div>
           </section>
@@ -1191,12 +1368,12 @@ export default function AdminPage() {
                           .slice()
                           .sort((a, b) => b.score - a.score)
                           .map((attempt, index) => (
-                          <tr key={`${attempt.userId}-${index}`} className="border-t border-[#e2e8f2]">
-                            <td className="px-3 py-2 text-[#1e3757]">{attempt.userId}</td>
-                            <td className="px-3 py-2 text-[#5a6f8a]">{attempt.score}</td>
-                            <td className="px-3 py-2 text-[#5a6f8a]">{attempt.date.toLocaleDateString()}</td>
-                          </tr>
-                        ))}
+                            <tr key={`${attempt.userId}-${index}`} className="border-t border-[#e2e8f2]">
+                              <td className="px-3 py-2 text-[#1e3757]">{attempt.userId}</td>
+                              <td className="px-3 py-2 text-[#5a6f8a]">{attempt.score}</td>
+                              <td className="px-3 py-2 text-[#5a6f8a]">{attempt.date.toLocaleDateString()}</td>
+                            </tr>
+                          ))}
                       </tbody>
                     </table>
                   </div>
@@ -1318,5 +1495,13 @@ function MetricCard({ label, value }: { label: string; value: string }) {
       <p className="text-xs uppercase tracking-wide text-[#5f7491]">{label}</p>
       <p className="mt-1 text-3xl font-bold text-[#142842]">{value}</p>
     </article>
+  )
+}
+
+function EmptyAnalyticsState({ message }: { message: string }) {
+  return (
+    <div className="flex h-72 items-center justify-center rounded-xl border border-dashed border-[#dbe5f1] bg-[#f8fbff] px-6 text-center text-sm text-[#5a6f8a]">
+      {message}
+    </div>
   )
 }

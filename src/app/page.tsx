@@ -160,6 +160,9 @@ export default function Home() {
         await addDoc(collection(db, 'analyticsEvents'), {
           type: 'landing_visit',
           source,
+          path: window.location.pathname,
+          referrer: document.referrer || '',
+          userAgent: navigator.userAgent || '',
           createdAt: serverTimestamp(),
         })
       } catch (error) {

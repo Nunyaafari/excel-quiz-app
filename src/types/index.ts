@@ -1,3 +1,66 @@
+export const QUESTION_CATEGORIES = [
+  'Formulas',
+  'Shortcuts',
+  'Charts',
+  'DataAnalysis',
+  'Formatting',
+  'Advanced Charts',
+  'Advanced Filtering',
+  'Advanced Lookup',
+  'Advanced PivotTables',
+  'Advanced Sorting',
+  'Advanced Visualization',
+  'Arithmetic Functions',
+  'Array Formulas',
+  'Autofill and Flash Fill',
+  'Chart Elements',
+  'Conditional Functions',
+  'Data Analysis Tools',
+  'Data Consolidation',
+  'Data Entry',
+  'Data Selection Strategies',
+  'Data Validation',
+  'Date Functions',
+  'Dynamic Array Functions',
+  'Excel Basics',
+  'Excel Interface',
+  'Excel Tables',
+  'Financial Functions',
+  'Find and Replace',
+  'Freeze Panes',
+  'Functions',
+  'Information Functions',
+  'Logical Functions',
+  'Lookup Functions',
+  'Math Functions',
+  'Modern Functions',
+  'Named Ranges',
+  'Paste Special',
+  'PivotCharts',
+  'PivotTables',
+  'Power Pivot',
+  'Printing',
+  'Statistical Functions',
+  'Subtotals and Grouping',
+  'Text Functions',
+  'View Tools',
+  'Power Functions',
+  'Conditional Formatting',
+  'Statistical Analysis',
+  'Macros and VBA',
+  'Collaboration',
+  'Workbook Security',
+] as const
+
+export type QuestionCategory = (typeof QUESTION_CATEGORIES)[number]
+export type QuizDifficulty = 1 | 2 | 3 | 4 | 5
+
+const questionCategoryLookup = new Set<string>(QUESTION_CATEGORIES)
+
+export function isQuestionCategory(value: unknown): value is QuestionCategory {
+  return typeof value === 'string' && questionCategoryLookup.has(value)
+}
+
 export interface User {
   uid: string
   email: string
@@ -12,23 +75,21 @@ export interface User {
 export interface Question {
   id: string
   text: string
-  category: 'Formulas' | 'Shortcuts' | 'Charts' | 'DataAnalysis' | 'Formatting' |
-           'Advanced Charts' | 'Advanced Filtering' | 'Advanced Lookup' | 'Advanced PivotTables' |
-           'Advanced Sorting' | 'Advanced Visualization' | 'Arithmetic Functions' | 'Array Formulas' |
-           'Autofill and Flash Fill' | 'Chart Elements' | 'Conditional Functions' |
-           'Data Analysis Tools' | 'Data Consolidation' | 'Data Entry' | 'Data Selection Strategies' |
-           'Data Validation' | 'Date Functions' | 'Dynamic Array Functions' | 'Excel Basics' |
-           'Excel Interface' | 'Excel Tables' | 'Financial Functions' | 'Find and Replace' |
-           'Freeze Panes' | 'Functions' | 'Information Functions' | 'Logical Functions' |
-           'Lookup Functions' | 'Math Functions' | 'Modern Functions' | 'Named Ranges' |
-           'Paste Special' | 'PivotCharts' | 'PivotTables' | 'Power Pivot' | 'Printing' |
-           'Statistical Functions' | 'Subtotals and Grouping' | 'Text Functions' | 'View Tools' |
-           'Power Functions' | 'Conditional Formatting' | 'Statistical Analysis' | 'Macros and VBA' |
-           'Collaboration' | 'Workbook Security'
+  category: QuestionCategory
   options: string[]
-  correctAnswer: number // 0-3 index
-  difficulty: 1 | 2 | 3 | 4 | 5
+  correctAnswer: number
+  difficulty: QuizDifficulty
   imageUrl?: string
+}
+
+export interface QuizAttemptQuestionResult {
+  id: string
+  text: string
+  category: string
+  options: string[]
+  correctAnswer: number
+  userAnswer: number | null
+  isCorrect: boolean
 }
 
 export interface QuizAttempt {
@@ -45,19 +106,11 @@ export interface QuizAttempt {
   survey?: {
     usageFrequency: 'Rarely' | 'As needed' | 'Mostly' | 'Newbie'
     selfAssessment: 'Novice' | 'Intermediate' | 'Advanced' | 'Legend'
-    difficultyLevels: Array<1 | 2 | 3 | 4 | 5>
+    difficultyLevels: QuizDifficulty[]
     difficultyLabel: string
   }
   respondentEmail?: string
-  questions?: Array<{
-    id: string
-    text: string
-    category: string
-    options: string[]
-    correctAnswer: number
-    userAnswer: number | null
-    isCorrect: boolean
-  }>
+  questions?: QuizAttemptQuestionResult[]
 }
 
 export interface TrainingMaterial {
@@ -94,7 +147,7 @@ export interface AdminStats {
 
 export interface QuizState {
   currentQuestionIndex: number
-  selectedAnswers: (number | null)[]
+  selectedAnswers: Array<number | null>
   score: number
   isCompleted: boolean
   startTime: Date | null
@@ -105,7 +158,7 @@ export interface QuizState {
 export interface QuizSurvey {
   usageFrequency: 'Rarely' | 'As needed' | 'Mostly' | 'Newbie'
   selfAssessment: 'Novice' | 'Intermediate' | 'Advanced' | 'Legend'
-  difficultyLevels: Array<1 | 2 | 3 | 4 | 5>
+  difficultyLevels: QuizDifficulty[]
   difficultyLabel: string
 }
 
@@ -131,7 +184,7 @@ export interface QuizLead {
 export interface QuizBatch {
   id: string
   name: string
-  difficultyLevels: Array<1 | 2 | 3 | 4 | 5>
+  difficultyLevels: QuizDifficulty[]
   difficultyLabel: string
   invitees: string[]
   createdBy: string
@@ -157,8 +210,8 @@ export interface ContentApproval {
 }
 
 export interface TrainingMaterialExtended extends TrainingMaterial {
-  difficulty: 1 | 2 | 3 | 4 | 5
-  estimatedTime: number // in minutes
+  difficulty: QuizDifficulty
+  estimatedTime: number
   createdAt: Date
   createdBy: string
   approved: boolean

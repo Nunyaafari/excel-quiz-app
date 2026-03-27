@@ -65,9 +65,11 @@ function parseReviewRecord(raw: unknown, id: string): Review | null {
 }
 
 export default function Home() {
-  const { user, signIn } = useAuth()
+  const { user, signIn, signOut } = useAuth()
   const router = useRouter()
   const [isSigningIn, setIsSigningIn] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false)
   const [featuredReviews, setFeaturedReviews] = useState<Review[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(true)
 
@@ -82,12 +84,26 @@ export default function Home() {
     setIsSigningIn(true)
     try {
       await signIn()
+      setIsAdminMenuOpen(false)
       router.push('/admin')
     } catch (error) {
       console.error('Sign in failed:', error)
       alert(getAuthErrorMessage(error))
     } finally {
       setIsSigningIn(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    try {
+      await signOut()
+      setIsAdminMenuOpen(false)
+    } catch (error) {
+      console.error('Sign out failed:', error)
+      alert('Sign out failed. Please try again.')
+    } finally {
+      setIsSigningOut(false)
     }
   }
 
@@ -169,21 +185,63 @@ export default function Home() {
             <p className="text-sm font-semibold tracking-wide">Excel Competency Program</p>
             <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
               <p className="text-xs text-[#d3e6ff]">Corporate Assessment Platform</p>
-              <button
-                onClick={user ? () => router.push('/admin') : () => void handleSignIn()}
-                disabled={isSigningIn}
-                aria-label={user ? 'Open admin workspace' : 'Admin sign in'}
-                title={user ? `Open admin workspace for ${adminIdentityLabel}` : 'Admin sign in'}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white shadow-sm transition hover:border-white/40 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {user ? (
-                  <span className="text-sm font-semibold">{adminIdentityMark}</span>
-                ) : (
-                  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
-                    <path d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12Zm0 2.25c-3 0-9 1.5-9 4.5V21h18v-2.25c0-3-6-4.5-9-4.5Z" />
-                  </svg>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsAdminMenuOpen((current) => !current)}
+                  aria-label={user ? 'Open admin account menu' : 'Open admin login menu'}
+                  title={user ? `Admin account for ${adminIdentityLabel}` : 'Admin login menu'}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white shadow-sm transition hover:border-white/40 hover:bg-white/20"
+                >
+                  {user ? (
+                    <span className="text-sm font-semibold">{adminIdentityMark}</span>
+                  ) : (
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
+                      <path d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12Zm0 2.25c-3 0-9 1.5-9 4.5V21h18v-2.25c0-3-6-4.5-9-4.5Z" />
+                    </svg>
+                  )}
+                </button>
+
+                {isAdminMenuOpen && (
+                  <div className="absolute right-0 top-14 z-20 w-56 rounded-2xl border border-white/20 bg-[#0f2744]/95 p-2 text-left text-white shadow-2xl backdrop-blur-md">
+                    {user ? (
+                      <>
+                        <div className="border-b border-white/10 px-3 py-2">
+                          <p className="text-sm font-semibold">{adminIdentityLabel}</p>
+                          <p className="text-xs text-[#c8e8ff]">Admin access</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAdminMenuOpen(false)
+                            router.push('/admin')
+                          }}
+                          className="mt-2 flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                        >
+                          Open Admin Dashboard
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleSignOut()}
+                          disabled={isSigningOut}
+                          className="mt-1 flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          {isSigningOut ? 'Signing out...' : 'Sign Out'}
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void handleSignIn()}
+                        disabled={isSigningIn}
+                        className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isSigningIn ? 'Signing in...' : 'Admin Login'}
+                      </button>
+                    )}
+                  </div>
                 )}
-              </button>
+              </div>
             </div>
           </div>
 

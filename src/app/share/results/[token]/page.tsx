@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: ShareResultsPageProps): Promi
   const title = `Dare to Take the Quiz: ${snapshot.percentage}% on Excel Mastery Quiz`
   const description = `${snapshot.performanceLabel} performance, ${snapshot.correctAnswers}/${snapshot.totalQuestions} correct, ${snapshot.profileLabel}.`
   const path = buildShareResultsPath(snapshot)
-  const imagePath = `${path}/opengraph-image`
+  const imagePath = `/api/share-badge/${token}`
   const imageUrl = new URL(imagePath, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').toString()
 
   return {
@@ -73,7 +73,7 @@ export default async function SharedResultsPage({ params }: ShareResultsPageProp
   const scoreColor =
     snapshot.percentage >= 80 ? 'text-emerald-600' : snapshot.percentage >= 60 ? 'text-amber-600' : 'text-red-600'
   const sharePath = buildShareResultsPath(snapshot)
-  const badgeImagePath = `${sharePath}/opengraph-image`
+  const badgeImagePath = `/api/share-badge/${token}`
   const badgeAlt = `Excel quiz badge showing ${snapshot.percentage}% and ${snapshot.performanceLabel}`
 
   return (

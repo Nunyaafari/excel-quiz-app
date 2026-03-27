@@ -7,7 +7,6 @@ type TrainingProgram = {
   id: string
   title: string
   duration: string
-  fee: string
   objectives: string[]
   outline: string[]
   description: string
@@ -35,20 +34,20 @@ const programs: TrainingProgram[] = [
     id: 'program-remote',
     title: 'Microsoft Excel Foundation',
     duration: '6 hrs total',
-    fee: 'GHS 900 per participant',
     objectives: [
-      'Foundational understanding of Excel',
-      'Create, format, and manipulate worksheets',
-      'Use basic functions and formulas',
-      'Apply Excel to common business tasks',
+      'Provide participants with a foundational understanding of Excel.',
+      'Teach participants how to create, format, and manipulate Excel worksheets.',
+      'Introduce basic Excel functions and formulas.',
+      'Enable participants to confidently use Excel for common tasks.',
     ],
     outline: [
-      'Introduction to Excel interface and workbooks',
-      'Data entry, formatting, and alignment',
-      'Functions vs formulas (SUM, AVERAGE, COUNT)',
-      'Data management: sorting, filtering, duplicates',
-      'Charts and graphs with formatting',
-      'Printing, sharing, recap, and Q&A',
+      'Module 1: Introduction to Excel - Overview of Excel, interface, navigating worksheets, creating and opening workbooks.',
+      'Module 2: Data Entry and Formatting - Entering and editing data, formatting fonts and borders, alignment, wrapping, fill colors, and shading.',
+      'Module 3: Cell Functions and Formulas - Functions vs formulas, SUM, AVERAGE, COUNT, basic arithmetic formulas, relative vs absolute references.',
+      'Module 4: Data Management - Sorting, filtering, removing duplicates, and data validation rules.',
+      'Module 5: Charts and Graphs - Creating charts, formatting and customizing charts, adding data labels, inserting charts into worksheets.',
+      'Module 6: Printing and Sharing - Preparing worksheets for printing, page setup, print preview, sharing, and exporting files.',
+      'Module 7: Recap and Q&A - Review of key concepts, clarification, and assessment.',
     ],
     description:
       'Designed for beginners who need a structured path to confident, accurate Excel work.',
@@ -57,19 +56,19 @@ const programs: TrainingProgram[] = [
     id: 'program-onsite',
     title: 'Intermediate Excel Training',
     duration: '6 hrs total',
-    fee: 'GHS 1,500 per participant',
     objectives: [
-      'Advance data analysis and reporting skills',
-      'Use advanced formulas and lookups',
-      'Improve data transformation workflows',
+      'Build on foundational Excel skills with stronger data analysis capability.',
+      'Develop confidence with advanced formulas, automation, and reporting.',
+      'Handle more complex spreadsheet and consolidation tasks efficiently.',
+      'Use Excel features that support faster analysis and clearer presentation.',
     ],
     outline: [
-      'Hacks and techniques (Autofill, Find & Replace, Named Ranges, Paste Special)',
-      'Advanced formulas (IF/AND/OR, VLOOKUP/HLOOKUP, SUMIF/AVERAGEIF)',
-      'Text and date functions (CONCATENATE, TRIM, WEEKDAY, EDATE)',
-      'Data consolidation, tables, subtotals, and grouping',
-      'Advanced charting and PivotTables/PivotCharts',
-      'Module conclusion and Q&A',
+      'Session 1: Excel Hacks and Techniques - Data selection strategies, Autofill and Flash Fill, Find & Replace, Named Ranges, Paste Special.',
+      'Session 2: Exploring Advanced Formulas and Functions - IF, AND, OR, VLOOKUP, HLOOKUP, ROUND, MOD, text functions, SUMIF, AVERAGEIF, COUNTIF, date functions, MEDIAN, RANK, LARGE.',
+      'Session 3: Data Consolidation and Data Tables - Subtotals and grouping, Freeze Panes, consolidating data from multiple worksheets, creating Excel tables.',
+      'Session 4: Advanced Charting and Graphical Data Presentation - Advanced chart types, combining charts, dynamic titles and labels, chart elements.',
+      'Session 6: PivotTables and PivotCharts - Introduction to PivotTables, creating PivotTables from large datasets, formatting PivotTables, creating PivotCharts.',
+      'Session 7: Module Conclusion and Q&A - Recap of key learnings, participant questions, clarification, and assessment.',
     ],
     description:
       'A practical module for analysts and coordinators who already use Excel regularly and need stronger automation skills.',
@@ -78,19 +77,23 @@ const programs: TrainingProgram[] = [
     id: 'program-offsite',
     title: 'Advanced Excel Training',
     duration: '6 hrs total',
-    fee: 'GHS 1,500 per participant',
     objectives: [
-      'Master advanced functions and modeling',
-      'Build dashboards and analytical tools',
-      'Automate workflows with macros and VBA',
+      'Become proficient in advanced techniques for data analysis and automation.',
+      'Strengthen complex modeling, advanced visualization, and business analysis skills.',
+      'Use advanced Excel tools for decision support and interactive reporting.',
+      'Introduce automation with Macros, VBA, and Power Pivot.',
     ],
     outline: [
-      'Advanced formulas (ARRAY, INDEX/MATCH, financial functions, XLOOKUP)',
-      'Advanced PivotTables, PivotCharts, and measures',
-      'Data validation, advanced filtering, conditional formatting',
-      'Advanced visualization (combo charts, waterfalls, sparklines)',
-      'Data analysis tools (Goal Seek, Solver, Data Tables)',
-      'Macros, VBA, Power Pivot, and workbook management',
+      'Session 1: Advanced Formulas and Functions - Array formulas, INDEX and MATCH, financial functions, ISERROR, IFERROR, XLOOKUP, VSTACK, CHOOSE, SEQUENCE, RAND, RANDBETWEEN, AGGREGATE, TRANSPOSE.',
+      'Session 2: Advanced PivotTables and PivotCharts - Calculated fields and items, custom measures, interactive dashboards with PivotCharts.',
+      'Session 3: Data Validation and Advanced Filtering Mastery - Tailored validation rules, dropdown lists, advanced sorting, advanced filtering.',
+      'Session 4: Conditional Formatting - Applying conditional formatting rules and creating custom formatting logic.',
+      'Session 5: Advanced Data Visualization - Advanced chart customization, combo charts, waterfall charts, sparklines, and data bars.',
+      'Session 6: Advanced Data Analysis Techniques - Scenario Manager, Goal Seek, Solver, Data Tables, VAR, STDEV.P.',
+      'Session 6: Automation with Macros and VBA - Introduction to Macros, recording and editing Macros.',
+      'Session 6: Power Pivot - Introduction to Power Pivot and creating relationships between tables.',
+      'Session 7: Advanced Workbook Management and Collaboration - Excel Online collaboration and protecting workbooks with advanced security settings.',
+      'Session 8: Module Conclusion and Q&A - Recap, participant clarification, and assessment.',
     ],
     description:
       'For power users and analysts who need advanced modeling, automation, and visualization capabilities.',
@@ -212,6 +215,22 @@ export default function TrainingProgramsPage() {
               Offsite
             </span>
           </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="rounded-xl border border-white/35 bg-white px-4 py-2 text-sm font-semibold text-[#12314d] transition hover:bg-[#eef6ff]"
+            >
+              Home
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/quiz/results')}
+              className="rounded-xl border border-white/35 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
+            >
+              Back to Results
+            </button>
+          </div>
         </section>
 
         <section className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -227,7 +246,6 @@ export default function TrainingProgramsPage() {
                 <span className="rounded-full border border-[#dbe5f1] bg-[#f9fbff] px-3 py-1 text-xs font-semibold text-[#1e3757]">
                   {program.duration}
                 </span>
-                <span className="text-xs font-semibold text-[#1e3757]">{program.fee}</span>
               </div>
               <h2 className="mt-3 text-xl font-semibold text-[#142842]">{program.title}</h2>
               <p className="mt-2 text-sm text-[#5a6f8a]">{program.description}</p>
@@ -366,6 +384,14 @@ export default function TrainingProgramsPage() {
                   Trained 2,000+ managers and professionals across Ghanaian corporate teams.
                 </p>
                 <p className="mt-3 text-sm font-semibold text-[#1e3757]">Contact: +233 558358446</p>
+                <a
+                  href="https://www.linkedin.com/in/nunyaafari/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex items-center rounded-full border border-[#bcd0e4] bg-white px-4 py-2 text-sm font-medium text-[#1e3757] transition hover:border-[#1f6f6d] hover:text-[#1f6f6d]"
+                >
+                  View LinkedIn Profile
+                </a>
               </div>
             </div>
 
@@ -377,29 +403,27 @@ export default function TrainingProgramsPage() {
 
               <div className="mt-5 space-y-4 text-sm leading-relaxed text-[#5a6f8a]">
                 <p>
-                  I am a passionate Microsoft Excel trainer and data productivity advocate with over two decades of
-                  experience helping professionals work smarter with data.
+                  Over two decades ago, while working in the finance department of one of Ghana&apos;s leading banks,
+                  I discovered a simple yet powerful tool in Microsoft Excel, Subtotal. What seemed like a small
+                  discovery at the time dramatically reduced the hours spent on routine financial analysis and
+                  reporting. That moment sparked a deep curiosity about Excel and its ability to transform the way
+                  professionals work with data.
                 </p>
                 <p>
-                  My journey began while working in the finance department of one of Ghana&apos;s leading banks. A
-                  simple discovery of Excel&apos;s Subtotal function transformed how I handled financial reports and
-                  analysis. The amount of time it saved immediately sparked my curiosity about the deeper capabilities
-                  of Excel and how powerful it could be in the hands of professionals.
+                  Since then, I have committed myself to mastering practical Excel techniques that improve
+                  productivity, simplify analysis, and support better decision-making. What began as a personal
+                  learning journey has evolved into a passion for teaching others how to work smarter with data.
                 </p>
                 <p>
-                  What started as personal exploration soon became a long-term commitment to mastering Excel and sharing
-                  practical knowledge that improves workplace efficiency. Today, that passion has evolved into a
-                  training initiative that has empowered over 2,000 managers and professionals across industries
-                  including banking, insurance, oil and gas, energy, and construction in Ghana.
+                  Through this passion, I have trained over 2,000 managers and professionals across multiple
+                  industries in Ghana, including banking, insurance, oil and gas, energy, and construction. My
+                  training focuses on practical, real-world applications that professionals can immediately apply in
+                  their daily work.
                 </p>
                 <p>
-                  My training approach focuses on practical, real-world applications, helping professionals simplify
-                  complex data, automate routine tasks, and make better decisions using the tools they already have.
-                </p>
-                <p>
-                  I strongly believe that the more knowledge is shared, the more it multiplies. Every session I
-                  facilitate is an opportunity not only to teach, but also to learn, connect, and help professionals
-                  unlock the full power of Excel.
+                  I firmly believe that knowledge grows when it is shared. Every training session is not just an
+                  opportunity to teach, but also a chance to learn, connect, and empower professionals to unlock the
+                  full potential of tools they use every day.
                 </p>
               </div>
 

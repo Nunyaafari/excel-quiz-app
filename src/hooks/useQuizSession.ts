@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth'
 import { db } from '@/lib/firebase'
 import {
   QUESTIONS_PER_PAGE,
   SESSION_SECONDS,
   createInitialQuizState,
+  getQuizParticipantId,
   loadQuizSessionData,
   saveQuizAttempt,
 } from '@/lib/quiz-session'
@@ -20,8 +20,6 @@ interface UseQuizSessionOptions {
 }
 
 interface UseQuizSessionResult {
-  user: ReturnType<typeof useAuth>['user']
-  authLoading: boolean
   quizLoading: boolean
   surveyLoading: boolean
   questions: Question[]
@@ -47,8 +45,8 @@ interface UseQuizSessionResult {
 
 export function useQuizSession(options: UseQuizSessionOptions): UseQuizSessionResult {
   const { batchId, retakeToken, source } = options
-  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const participantId = useMemo(() => getQuizParticipantId(), [])
 
   const [questions, setQuestions] = useState<Question[]>([])
   const [survey, setSurvey] = useState<QuizSurvey | null>(null)
@@ -99,15 +97,6 @@ export function useQuizSession(options: UseQuizSessionOptions): UseQuizSessionRe
   }, [])
 
   useEffect(() => {
-    if (authLoading) {
-      return
-    }
-
-    if (!user) {
-      router.push('/')
-      return
-    }
-
     const fetchSession = async () => {
       setQuizLoading(true)
 
@@ -140,7 +129,7 @@ export function useQuizSession(options: UseQuizSessionOptions): UseQuizSessionRe
     }
 
     void fetchSession()
-  }, [authLoading, user, router, batchId, retakeToken, initializeSessionState])
+  }, [router, batchId, retakeToken, initializeSessionState])
 
   const handleAnswerSelect = useCallback((questionIndex: number, answerIndex: number) => {
     setQuizState((previousState: QuizState) => {
@@ -155,11 +144,6 @@ export function useQuizSession(options: UseQuizSessionOptions): UseQuizSessionRe
   }, [])
 
   const handleQuizComplete = useCallback(async () => {
-    if (!user) {
-      router.push('/')
-      return
-    }
-
     const resolvedQuestions = questionsRef.current
     const resolvedState = quizStateRef.current
     const endTime = new Date()
@@ -175,7 +159,7 @@ export function useQuizSession(options: UseQuizSessionOptions): UseQuizSessionRe
 
     await saveQuizAttempt({
       db,
-      userId: user.uid,
+      userId: participantId,
       batchId: batchId || '',
       source,
       batchInfo: batchInfoRef.current,
@@ -186,7 +170,7 @@ export function useQuizSession(options: UseQuizSessionOptions): UseQuizSessionRe
     })
 
     router.push('/quiz/results')
-  }, [batchId, router, source, user])
+  }, [batchId, participantId, router, source])
 
   useEffect(() => {
     const expiresAt = quizState.expiresAt
@@ -282,7 +266,7 @@ export function useQuizSession(options: UseQuizSessionOptions): UseQuizSessionRe
   }, [handleQuizComplete, safeCurrentPage, totalPages])
 
   useEffect(() => {
-    if (authLoading || quizLoading || !user || questions.length === 0) {
+    if (quizLoading || questions.length === 0) {
       return
     }
 
@@ -300,15 +284,13 @@ export function useQuizSession(options: UseQuizSessionOptions): UseQuizSessionRe
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [authLoading, handleNextPage, questions.length, quizLoading, user])
+  }, [handleNextPage, questions.length, quizLoading])
 
   const handleExitQuiz = useCallback(() => {
     router.push('/')
   }, [router])
 
   return {
-    user,
-    authLoading,
     quizLoading,
     surveyLoading,
     questions,

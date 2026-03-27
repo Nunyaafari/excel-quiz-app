@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useQuizSession } from '@/hooks/useQuizSession'
 import { QUESTIONS_PER_PAGE, calculateLiveScore, difficultyLabel, formatTimerDisplay } from '@/lib/quiz-session'
@@ -34,14 +34,14 @@ function QuizEmptyState({ onExit }: { onExit: () => void }) {
 }
 
 function QuizPageContent() {
+  const topRef = useRef<HTMLDivElement | null>(null)
+  const hasMountedPageRef = useRef(false)
   const searchParams = useSearchParams()
   const retakeToken = searchParams.get('attempt') ?? ''
   const batchId = searchParams.get('batchId') ?? searchParams.get('batch') ?? ''
   const source = searchParams.get('source') ?? 'web'
 
   const {
-    user,
-    authLoading,
     quizLoading,
     surveyLoading,
     questions,
@@ -68,12 +68,18 @@ function QuizPageContent() {
     source,
   })
 
-  if (authLoading || surveyLoading || quizLoading) {
-    return <QuizLoadingScreen />
-  }
+  useEffect(() => {
+    if (!hasMountedPageRef.current) {
+      hasMountedPageRef.current = true
+      return
+    }
 
-  if (!user) {
-    return null
+    topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [safeCurrentPage])
+
+  if (surveyLoading || quizLoading) {
+    return <QuizLoadingScreen />
   }
 
   if (questions.length === 0) {
@@ -87,6 +93,7 @@ function QuizPageContent() {
 
   return (
     <div className="min-h-screen bg-[#eef2f6] py-6 md:py-8">
+      <div ref={topRef} />
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto space-y-5">
           <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f2744] via-[#144d6a] to-[#1f6f6d] shadow-xl">

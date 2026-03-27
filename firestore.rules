@@ -31,7 +31,14 @@ service cloud.firestore {
 
     // Quiz attempts - users can create and read their own attempts, admins can read for reporting
     match /quizAttempts/{attemptId} {
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if request.resource.data.userId is string
+        && request.resource.data.score is number
+        && request.resource.data.totalQuestions is number
+        && request.resource.data.correctAnswers is number
+        && request.resource.data.date is timestamp
+        && request.resource.data.categoryScores is map
+        && request.resource.data.wrongCategories is list
+        && request.resource.data.questions is list;
       allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow update, delete: if false;
     }
@@ -56,14 +63,20 @@ service cloud.firestore {
     // Reviews - public read, signed-in create only
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if request.resource.data.userId is string
+        && request.resource.data.displayName is string
+        && request.resource.data.rating is number
+        && request.resource.data.comment is string
+        && request.resource.data.createdAt is timestamp;
       allow update, delete: if false;
     }
 
-    // Quiz leads - admin read, signed-in create only
+    // Quiz leads - admin read, public create
     match /quizLeads/{leadId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if request.resource.data.userId is string
+        && request.resource.data.email is string
+        && request.resource.data.createdAt is timestamp;
       allow update, delete: if false;
     }
 

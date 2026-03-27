@@ -4,7 +4,7 @@ import { ChangeEvent, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp, where } from 'firebase/firestore'
 import { useAuth } from '@/lib/auth'
-import { db } from '@/lib/firebase'
+import { auth, db } from '@/lib/firebase'
 import { AdminStats, CSVImportResult, Question, QuizBatch, QuizLead, TrainingRequest } from '@/types'
 import { getAdminAnalyticsSnapshot, type AdminAnalyticsSnapshot } from '@/lib/admin-analytics'
 import {
@@ -17,6 +17,7 @@ import {
   validateCSVQuestions,
 } from '@/lib/csv-import'
 import QuestionManager from '@/components/admin/QuestionManager'
+import BlogManager from '@/components/admin/BlogManager'
 import { Chart as ChartJS, CategoryScale, LinearScale, ArcElement, Tooltip, Legend, BarElement } from 'chart.js'
 import { Doughnut, Bar } from 'react-chartjs-2'
 
@@ -26,6 +27,8 @@ type AnalyticsDetails = Pick<
   AdminAnalyticsSnapshot,
   'sourceDistribution' | 'landingSourceDistribution' | 'scoreBandDistribution' | 'dailyAttempts' | 'weakCategoryCounts'
 >
+
+type AdminTab = 'overview' | 'content' | 'analytics' | 'batches' | 'outreach'
 
 const CHART_COLORS = ['#0f2744', '#144d6a', '#1f6f6d', '#3f86a8', '#82b8d7', '#94d2bd']
 
@@ -42,6 +45,9 @@ export default function AdminPage() {
   const [importing, setImporting] = useState(false)
   const [leads, setLeads] = useState<QuizLead[]>([])
   const [leadsLoading, setLeadsLoading] = useState(false)
+  const [leadActionMessage, setLeadActionMessage] = useState<string | null>(null)
+  const [leadActionTone, setLeadActionTone] = useState<'success' | 'warning' | 'error' | null>(null)
+  const [leadSendingId, setLeadSendingId] = useState<string | null>(null)
   const [batchName, setBatchName] = useState('')
   const [batchDifficulty, setBatchDifficulty] = useState<'Novice' | 'Intermediate' | 'Advanced' | 'Legend'>('Intermediate')
   const [batchInvitees, setBatchInvitees] = useState('')
@@ -53,6 +59,7 @@ export default function AdminPage() {
   const [batchError, setBatchError] = useState<string | null>(null)
   const [trainingRequests, setTrainingRequests] = useState<TrainingRequest[]>([])
   const [trainingRequestsLoading, setTrainingRequestsLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview')
 
   const parseLeadRecord = (raw: unknown, id: string): QuizLead | null => {
     if (!raw || typeof raw !== 'object') {
@@ -65,10 +72,14 @@ export default function AdminPage() {
       return null
     }
 
-    const createdAt =
-      data.createdAt && typeof data.createdAt === 'object' && 'toDate' in data.createdAt
-        ? (data.createdAt as { toDate: () => Date }).toDate()
-        : new Date()
+    const toDate = (value: unknown) =>
+      value && typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: unknown }).toDate === 'function'
+        ? (value as { toDate: () => Date }).toDate()
+        : value instanceof Date
+          ? value
+          : new Date()
+
+    const createdAt = toDate(data.createdAt)
 
     return {
       id,
@@ -78,6 +89,15 @@ export default function AdminPage() {
       selfAssessment: typeof data.selfAssessment === 'string' ? data.selfAssessment : 'Intermediate',
       difficultyLabel: typeof data.difficultyLabel === 'string' ? data.difficultyLabel : 'Mixed Difficulty',
       createdAt,
+      percentage: typeof data.percentage === 'number' ? data.percentage : undefined,
+      reportEmailStatus: typeof data.reportEmailStatus === 'string' ? data.reportEmailStatus : undefined,
+      reportEmailId: typeof data.reportEmailId === 'string' ? data.reportEmailId : undefined,
+      reportEmailError: typeof data.reportEmailError === 'string' ? data.reportEmailError : undefined,
+      reportEmailSentAt: data.reportEmailSentAt ? toDate(data.reportEmailSentAt) : undefined,
+      reportEmailDeliveredAt: data.reportEmailDeliveredAt ? toDate(data.reportEmailDeliveredAt) : undefined,
+      reportEmailFailedAt: data.reportEmailFailedAt ? toDate(data.reportEmailFailedAt) : undefined,
+      reportEmailOpenedAt: data.reportEmailOpenedAt ? toDate(data.reportEmailOpenedAt) : undefined,
+      reportEmailClickedAt: data.reportEmailClickedAt ? toDate(data.reportEmailClickedAt) : undefined,
     }
   }
 
@@ -455,6 +475,30 @@ export default function AdminPage() {
     setImportResult(null)
   }
 
+  const categoryDistributionEntries = useMemo(
+    () => Object.entries(stats?.categoryDistribution ?? {}),
+    [stats]
+  )
+  const sourceDistributionEntries = useMemo(
+    () => Object.entries(analyticsDetails?.sourceDistribution ?? {}),
+    [analyticsDetails]
+  )
+  const landingSourceEntries = useMemo(
+    () => Object.entries(analyticsDetails?.landingSourceDistribution ?? {}),
+    [analyticsDetails]
+  )
+  const scoreBandEntries = useMemo(
+    () => Object.entries(analyticsDetails?.scoreBandDistribution ?? {}),
+    [analyticsDetails]
+  )
+  const adminTabs: Array<{ id: AdminTab; label: string; description: string }> = [
+    { id: 'overview', label: 'Overview', description: 'Recent activity and admin shortcuts' },
+    { id: 'content', label: 'Content', description: 'Blog, questions, and CSV import' },
+    { id: 'analytics', label: 'Analytics', description: 'Performance, sources, and trends' },
+    { id: 'batches', label: 'Batches', description: 'Create invites and review cohort results' },
+    { id: 'outreach', label: 'Outreach', description: 'Leads and training requests' },
+  ]
+
   if (pageLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -506,13 +550,28 @@ export default function AdminPage() {
       return
     }
 
-    const header = ['email', 'userId', 'usageFrequency', 'selfAssessment', 'difficultyLabel', 'createdAt']
+    const header = [
+      'email',
+      'userId',
+      'usageFrequency',
+      'selfAssessment',
+      'difficultyLabel',
+      'percentage',
+      'reportEmailStatus',
+      'reportEmailSentAt',
+      'reportEmailDeliveredAt',
+      'createdAt',
+    ]
     const rows = leads.map((lead) => [
       lead.email,
       lead.userId,
       lead.usageFrequency,
       lead.selfAssessment,
       lead.difficultyLabel,
+      lead.percentage ?? '',
+      lead.reportEmailStatus ?? '',
+      lead.reportEmailSentAt?.toISOString() ?? '',
+      lead.reportEmailDeliveredAt?.toISOString() ?? '',
       lead.createdAt.toISOString(),
     ])
 
@@ -536,6 +595,52 @@ export default function AdminPage() {
 
     const emails = leads.map((lead) => lead.email).join(';')
     window.location.href = `mailto:?bcc=${encodeURIComponent(emails)}`
+  }
+
+  const handleResendLeadReport = async (lead: QuizLead) => {
+    setLeadActionMessage(null)
+    setLeadActionTone(null)
+    setLeadSendingId(lead.id)
+
+    try {
+      const idToken = await auth.currentUser?.getIdToken()
+      if (!idToken) {
+        throw new Error('missing-id-token')
+      }
+
+      const response = await fetch('/api/admin/quiz-results-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          leadId: lead.id,
+        }),
+      })
+
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Could not resend results email.')
+      }
+
+      const refreshedLead = {
+        ...lead,
+        reportEmailStatus: 'resent',
+        reportEmailSentAt: new Date(),
+        reportEmailError: undefined,
+      }
+
+      setLeads((current) => current.map((item) => (item.id === lead.id ? refreshedLead : item)))
+      setLeadActionTone('success')
+      setLeadActionMessage(`Report resent to ${lead.email}.`)
+    } catch (error) {
+      console.error('Failed to resend lead report:', error)
+      setLeadActionTone('error')
+      setLeadActionMessage(error instanceof Error ? error.message : 'Could not resend the report.')
+    } finally {
+      setLeadSendingId(null)
+    }
   }
 
   const handleExportTrainingRequests = () => {
@@ -788,23 +893,6 @@ export default function AdminPage() {
     window.URL.revokeObjectURL(url)
   }
 
-  const categoryDistributionEntries = useMemo(
-    () => Object.entries(stats?.categoryDistribution ?? {}),
-    [stats]
-  )
-  const sourceDistributionEntries = useMemo(
-    () => Object.entries(analyticsDetails?.sourceDistribution ?? {}),
-    [analyticsDetails]
-  )
-  const landingSourceEntries = useMemo(
-    () => Object.entries(analyticsDetails?.landingSourceDistribution ?? {}),
-    [analyticsDetails]
-  )
-  const scoreBandEntries = useMemo(
-    () => Object.entries(analyticsDetails?.scoreBandDistribution ?? {}),
-    [analyticsDetails]
-  )
-
   return (
     <div className="min-h-screen bg-[#eef2f6] py-6 md:py-8">
       <div className="container mx-auto px-4">
@@ -842,299 +930,388 @@ export default function AdminPage() {
             </section>
           )}
 
-          <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-2xl font-semibold text-[#142842]">Question Management</h2>
-              <p className="mt-1 mb-4 text-sm text-[#5a6f8a]">Create, edit, and maintain quiz question quality.</p>
-              <QuestionManager
-                onQuestionUpdate={() => {
-                  setStats((previous) =>
-                    previous
-                      ? {
-                          ...previous,
-                          totalQuestions: previous.totalQuestions + 1,
-                          recentActivity: [
-                            { action: 'Question updated', timestamp: new Date(), user: user.email || 'admin' },
-                            ...previous.recentActivity.slice(0, 7),
-                          ],
-                        }
-                      : previous
-                  )
-                }}
-              />
-            </div>
-
-            <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-2xl font-semibold text-[#142842]">CSV Import</h2>
-              <p className="mt-1 mb-4 text-sm text-[#5a6f8a]">Upload validated CSV files to add question batches.</p>
-
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  <button onClick={downloadSampleCSV} className="btn-secondary w-full sm:w-auto">
-                    Download Template
+          <section className="rounded-2xl border border-[#d9e3ef] bg-white p-4 shadow-sm md:p-5">
+            <div className="flex flex-wrap gap-2">
+              {adminTabs.map((tab) => {
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`rounded-xl border px-4 py-3 text-left transition ${
+                      isActive
+                        ? 'border-[#144d6a] bg-[#144d6a] text-white shadow-sm'
+                        : 'border-[#dbe5f1] bg-[#f8fbff] text-[#1e3757] hover:bg-white'
+                    }`}
+                  >
+                    <p className="text-sm font-semibold">{tab.label}</p>
+                    <p className={`mt-1 text-xs ${isActive ? 'text-[#d6ebff]' : 'text-[#5a6f8a]'}`}>{tab.description}</p>
                   </button>
-                </div>
+                )
+              })}
+            </div>
+          </section>
 
-                <div className="rounded-lg border border-[#dbe5f1] bg-[#f8fbff] p-4 text-sm text-[#45637f]">
-                  <p className="mb-2 font-semibold">CSV fields required</p>
-                  <p><strong>text</strong>, <strong>category</strong>, <strong>option1-4</strong>, <strong>correctAnswer</strong>, <strong>difficulty</strong>, <strong>imageUrl</strong></p>
-                </div>
-
-                <div className="rounded-lg border-2 border-dashed border-[#c6d7ee] bg-white p-6 text-center">
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleCSVUpload}
-                    className="hidden"
-                    id="csv-upload"
-                    disabled={importing}
-                  />
-                  <label htmlFor="csv-upload" className={`cursor-pointer ${importing ? 'opacity-50' : ''}`}>
-                    <p className="text-sm font-semibold text-[#1d3d61]">{csvFile ? csvFile.name : 'Select CSV file to upload'}</p>
-                    <p className="mt-1 text-xs text-[#5a6f8a]">Maximum file size: 5MB</p>
-                  </label>
-                </div>
-
-                {importing && (
-                  <div className="flex items-center justify-center py-3">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-excel-green"></div>
-                    <span className="ml-2 text-sm text-[#5a6f8a]">
-                      {importResult ? 'Importing valid questions to database...' : 'Validating CSV file...'}
-                    </span>
-                  </div>
-                )}
-
-                {importResult && (
-                  <div className={`rounded-lg border p-4 ${previewClassName}`}>
-                    <h4 className="font-semibold mb-2">
-                      {previewHasValidRows ? (previewHasInvalidRows ? 'Import Preview (Partial)' : 'Import Preview') : 'Import Errors'}
-                    </h4>
-                    <p className="text-sm mb-2">
-                      Valid: {importResult.importedCount} | Invalid: {importResult.failedCount}
+          {activeTab === 'overview' && (
+            <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                <h2 className="text-2xl font-semibold text-[#142842]">Platform Snapshot</h2>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
+                    <p className="text-sm font-semibold text-[#1e3757]">Content Library</p>
+                    <p className="mt-2 text-sm text-[#5a6f8a]">
+                      Use the Content tab to manage blog publishing, question updates, and CSV imports.
                     </p>
-
-                    {importResult.warnings?.length ? (
-                      <ul className="text-sm space-y-1 mb-2">
-                        {importResult.warnings.map((warning, index) => (
-                          <li key={index}>• {warning}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-
-                    {importResult.errors.length > 0 && (
-                      <ul className="text-sm space-y-1">
-                        {importResult.errors.map((error, index) => (
-                          <li key={index}>• {error}</li>
-                        ))}
-                      </ul>
-                    )}
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {importResult.questions.length > 0 && (
-                        <button onClick={handleImportQuestions} className="btn-primary w-full sm:w-auto" disabled={importing}>
-                          Import {importResult.questions.length} Valid Question(s)
-                        </button>
-                      )}
-                      {importResult.errors.length > 0 && (
-                        <button
-                          onClick={() => downloadImportErrorsCSV(importResult.errors)}
-                          className="btn-secondary w-full sm:w-auto"
-                          disabled={importing}
-                        >
-                          Download Failed Rows CSV
-                        </button>
-                      )}
-                      <button onClick={handleClearUpload} className="btn-secondary w-full sm:w-auto" disabled={importing}>
-                        Clear
-                      </button>
-                    </div>
                   </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-2xl font-semibold text-[#142842]">Category Performance</h2>
-                  <p className="mt-1 text-sm text-[#5a6f8a]">Correct answers accumulated by category across quiz attempts.</p>
+                  <div className="rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
+                    <p className="text-sm font-semibold text-[#1e3757]">Analytics Monitoring</p>
+                    <p className="mt-2 text-sm text-[#5a6f8a]">
+                      Use the Analytics tab to review category trends, traffic sources, and score distribution.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
+                    <p className="text-sm font-semibold text-[#1e3757]">Batch Operations</p>
+                    <p className="mt-2 text-sm text-[#5a6f8a]">
+                      Use the Batches tab to create difficulty-based cohorts, share invite links, and export results.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
+                    <p className="text-sm font-semibold text-[#1e3757]">Lead Follow-up</p>
+                    <p className="mt-2 text-sm text-[#5a6f8a]">
+                      Use the Outreach tab to manage quiz leads, resend reports, and review training requests.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {categoryDistributionEntries.length > 0 ? (
-                <div className="mt-4 h-72">
-                  <Doughnut
-                    data={{
-                      labels: categoryDistributionEntries.map(([label]) => label),
-                      datasets: [
-                        {
-                          data: categoryDistributionEntries.map(([, value]) => value),
-                          backgroundColor: categoryDistributionEntries.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]),
-                          borderWidth: 0,
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'bottom',
-                        },
-                      },
-                    }}
-                  />
-                </div>
-              ) : (
-                <EmptyAnalyticsState message="No quiz attempt category data yet." />
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-2xl font-semibold text-[#142842]">Attempt Sources</h2>
-              <p className="mt-1 text-sm text-[#5a6f8a]">Where completed quiz attempts are coming from.</p>
-
-              {sourceDistributionEntries.length > 0 ? (
-                <div className="mt-4 h-72">
-                  <Doughnut
-                    data={{
-                      labels: sourceDistributionEntries.map(([label]) => label),
-                      datasets: [
-                        {
-                          data: sourceDistributionEntries.map(([, value]) => value),
-                          backgroundColor: ['#0f2744', '#1f6f6d', '#82b8d7'],
-                          borderWidth: 0,
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'bottom',
-                        },
-                      },
-                    }}
-                  />
-                </div>
-              ) : (
-                <EmptyAnalyticsState message="No completed attempt source data yet." />
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-2xl font-semibold text-[#142842]">Daily Attempts</h2>
-              <p className="mt-1 text-sm text-[#5a6f8a]">Last 14 days of recorded quiz activity.</p>
-
-              {analyticsDetails && analyticsDetails.dailyAttempts.length > 0 ? (
-                <div className="mt-4 h-72">
-                  <Bar
-                    data={{
-                      labels: analyticsDetails.dailyAttempts.map((entry) => entry.date),
-                      datasets: [
-                        {
-                          label: 'Attempts',
-                          data: analyticsDetails.dailyAttempts.map((entry) => entry.attempts),
-                          backgroundColor: '#144d6a',
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { legend: { display: false } },
-                      scales: {
-                        y: { beginAtZero: true, ticks: { precision: 0 } },
-                      },
-                    }}
-                  />
-                </div>
-              ) : (
-                <EmptyAnalyticsState message="No daily attempt trend available yet." />
-              )}
-            </div>
-          </section>
-
-          <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-2xl font-semibold text-[#142842]">Analytics Highlights</h2>
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
-                  <p className="text-sm font-semibold text-[#1e3757]">Weak Categories</p>
-                  {analyticsDetails && analyticsDetails.weakCategoryCounts.length > 0 ? (
-                    <div className="mt-3 space-y-2">
-                      {analyticsDetails.weakCategoryCounts.map((entry) => (
-                        <div key={entry.category} className="flex items-center justify-between rounded-md border border-[#e2e8f2] bg-white px-3 py-2 text-sm">
-                          <span className="text-[#1e3757]">{entry.category}</span>
-                          <span className="font-semibold text-[#1e3757]">{entry.misses} misses</span>
+              <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                <h2 className="mb-4 text-2xl font-semibold text-[#142842]">Recent Activity</h2>
+                {stats && stats.recentActivity.length > 0 ? (
+                  <div className="space-y-3">
+                    {stats.recentActivity.map((activity, index) => (
+                      <div key={index} className="flex items-center justify-between rounded-lg border border-[#dbe5f1] bg-[#f8fbff] p-3">
+                        <div>
+                          <span className="font-medium text-[#1d3d61]">{activity.action}</span>
+                          <p className="text-sm text-[#5a6f8a]">{activity.user}</p>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-[#5a6f8a]">No weak-category trend yet.</p>
-                  )}
-                </div>
-
-                <div className="rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
-                  <p className="text-sm font-semibold text-[#1e3757]">Score Bands</p>
-                  {scoreBandEntries.length > 0 ? (
-                    <div className="mt-3 space-y-2">
-                      {scoreBandEntries.map(([band, value]) => (
-                        <div key={band} className="flex items-center justify-between rounded-md border border-[#e2e8f2] bg-white px-3 py-2 text-sm">
-                          <span className="text-[#1e3757]">{band}</span>
-                          <span className="font-semibold text-[#1e3757]">{value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-[#5a6f8a]">No score-band distribution yet.</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
-                <p className="text-sm font-semibold text-[#1e3757]">Landing Traffic Sources</p>
-                {landingSourceEntries.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {landingSourceEntries.map(([source, value]) => (
-                      <span
-                        key={source}
-                        className="inline-flex items-center rounded-full border border-[#cfdceb] bg-white px-3 py-1 text-sm text-[#1e3757]"
-                      >
-                        {source}: {value}
-                      </span>
+                        <span className="text-xs text-[#5a6f8a]">{activity.timestamp.toLocaleString()}</span>
+                      </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-3 text-sm text-[#5a6f8a]">No landing analytics events recorded yet.</p>
+                  <p className="text-sm text-[#5a6f8a]">No recent admin activity to display yet.</p>
                 )}
               </div>
-            </div>
+            </section>
+          )}
 
-            <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-              <h2 className="mb-4 text-2xl font-semibold text-[#142842]">Recent Activity</h2>
-              {stats && stats.recentActivity.length > 0 ? (
-                <div className="space-y-3">
-                  {stats.recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-center justify-between rounded-lg border border-[#dbe5f1] bg-[#f8fbff] p-3">
-                      <div>
-                        <span className="font-medium text-[#1d3d61]">{activity.action}</span>
-                        <p className="text-sm text-[#5a6f8a]">{activity.user}</p>
-                      </div>
-                      <span className="text-xs text-[#5a6f8a]">{activity.timestamp.toLocaleString()}</span>
-                    </div>
-                  ))}
+          {activeTab === 'content' && (
+            <>
+              <section>
+                <BlogManager adminName={user?.displayName || user?.email || 'Excel Mastery Team'} />
+              </section>
+
+              <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                  <h2 className="text-2xl font-semibold text-[#142842]">Question Management</h2>
+                  <p className="mt-1 mb-4 text-sm text-[#5a6f8a]">Create, edit, and maintain quiz question quality.</p>
+                  <QuestionManager
+                    onQuestionUpdate={() => {
+                      setStats((previous) =>
+                        previous
+                          ? {
+                              ...previous,
+                              totalQuestions: previous.totalQuestions + 1,
+                              recentActivity: [
+                                { action: 'Question updated', timestamp: new Date(), user: user.email || 'admin' },
+                                ...previous.recentActivity.slice(0, 7),
+                              ],
+                            }
+                          : previous
+                      )
+                    }}
+                  />
                 </div>
-              ) : (
-                <p className="text-sm text-[#5a6f8a]">No recent admin activity to display yet.</p>
-              )}
-            </div>
-          </section>
 
-          <section className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                  <h2 className="text-2xl font-semibold text-[#142842]">CSV Import</h2>
+                  <p className="mt-1 mb-4 text-sm text-[#5a6f8a]">Upload validated CSV files to add question batches.</p>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={downloadSampleCSV} className="btn-secondary w-full sm:w-auto">
+                        Download Template
+                      </button>
+                    </div>
+
+                    <div className="rounded-lg border border-[#dbe5f1] bg-[#f8fbff] p-4 text-sm text-[#45637f]">
+                      <p className="mb-2 font-semibold">CSV fields required</p>
+                      <p><strong>text</strong>, <strong>category</strong>, <strong>option1-4</strong>, <strong>correctAnswer</strong>, <strong>difficulty</strong>, <strong>imageUrl</strong></p>
+                    </div>
+
+                    <div className="rounded-lg border-2 border-dashed border-[#c6d7ee] bg-white p-6 text-center">
+                      <input
+                        type="file"
+                        accept=".csv"
+                        onChange={handleCSVUpload}
+                        className="hidden"
+                        id="csv-upload"
+                        disabled={importing}
+                      />
+                      <label htmlFor="csv-upload" className={`cursor-pointer ${importing ? 'opacity-50' : ''}`}>
+                        <p className="text-sm font-semibold text-[#1d3d61]">{csvFile ? csvFile.name : 'Select CSV file to upload'}</p>
+                        <p className="mt-1 text-xs text-[#5a6f8a]">Maximum file size: 5MB</p>
+                      </label>
+                    </div>
+
+                    {importing && (
+                      <div className="flex items-center justify-center py-3">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-excel-green"></div>
+                        <span className="ml-2 text-sm text-[#5a6f8a]">
+                          {importResult ? 'Importing valid questions to database...' : 'Validating CSV file...'}
+                        </span>
+                      </div>
+                    )}
+
+                    {importResult && (
+                      <div className={`rounded-lg border p-4 ${previewClassName}`}>
+                        <h4 className="font-semibold mb-2">
+                          {previewHasValidRows ? (previewHasInvalidRows ? 'Import Preview (Partial)' : 'Import Preview') : 'Import Errors'}
+                        </h4>
+                        <p className="text-sm mb-2">
+                          Valid: {importResult.importedCount} | Invalid: {importResult.failedCount}
+                        </p>
+
+                        {importResult.warnings?.length ? (
+                          <ul className="text-sm space-y-1 mb-2">
+                            {importResult.warnings.map((warning, index) => (
+                              <li key={index}>• {warning}</li>
+                            ))}
+                          </ul>
+                        ) : null}
+
+                        {importResult.errors.length > 0 && (
+                          <ul className="text-sm space-y-1">
+                            {importResult.errors.map((error, index) => (
+                              <li key={index}>• {error}</li>
+                            ))}
+                          </ul>
+                        )}
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {importResult.questions.length > 0 && (
+                            <button onClick={handleImportQuestions} className="btn-primary w-full sm:w-auto" disabled={importing}>
+                              Import {importResult.questions.length} Valid Question(s)
+                            </button>
+                          )}
+                          {importResult.errors.length > 0 && (
+                            <button
+                              onClick={() => downloadImportErrorsCSV(importResult.errors)}
+                              className="btn-secondary w-full sm:w-auto"
+                              disabled={importing}
+                            >
+                              Download Failed Rows CSV
+                            </button>
+                          )}
+                          <button onClick={handleClearUpload} className="btn-secondary w-full sm:w-auto" disabled={importing}>
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+
+          {activeTab === 'analytics' && (
+            <>
+              <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-2xl font-semibold text-[#142842]">Category Performance</h2>
+                      <p className="mt-1 text-sm text-[#5a6f8a]">Correct answers accumulated by category across quiz attempts.</p>
+                    </div>
+                  </div>
+
+                  {categoryDistributionEntries.length > 0 ? (
+                    <div className="mt-4 h-72">
+                      <Doughnut
+                        data={{
+                          labels: categoryDistributionEntries.map(([label]) => label),
+                          datasets: [
+                            {
+                              data: categoryDistributionEntries.map(([, value]) => value),
+                              backgroundColor: categoryDistributionEntries.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]),
+                              borderWidth: 0,
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: {
+                              position: 'bottom',
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <EmptyAnalyticsState message="No quiz attempt category data yet." />
+                  )}
+                </div>
+
+                <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                  <h2 className="text-2xl font-semibold text-[#142842]">Attempt Sources</h2>
+                  <p className="mt-1 text-sm text-[#5a6f8a]">Where completed quiz attempts are coming from.</p>
+
+                  {sourceDistributionEntries.length > 0 ? (
+                    <div className="mt-4 h-72">
+                      <Doughnut
+                        data={{
+                          labels: sourceDistributionEntries.map(([label]) => label),
+                          datasets: [
+                            {
+                              data: sourceDistributionEntries.map(([, value]) => value),
+                              backgroundColor: ['#0f2744', '#1f6f6d', '#82b8d7'],
+                              borderWidth: 0,
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: {
+                              position: 'bottom',
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <EmptyAnalyticsState message="No completed attempt source data yet." />
+                  )}
+                </div>
+
+                <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                  <h2 className="text-2xl font-semibold text-[#142842]">Daily Attempts</h2>
+                  <p className="mt-1 text-sm text-[#5a6f8a]">Last 14 days of recorded quiz activity.</p>
+
+                  {analyticsDetails && analyticsDetails.dailyAttempts.length > 0 ? (
+                    <div className="mt-4 h-72">
+                      <Bar
+                        data={{
+                          labels: analyticsDetails.dailyAttempts.map((entry) => entry.date),
+                          datasets: [
+                            {
+                              label: 'Attempts',
+                              data: analyticsDetails.dailyAttempts.map((entry) => entry.attempts),
+                              backgroundColor: '#144d6a',
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: { legend: { display: false } },
+                          scales: {
+                            y: { beginAtZero: true, ticks: { precision: 0 } },
+                          },
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <EmptyAnalyticsState message="No daily attempt trend available yet." />
+                  )}
+                </div>
+              </section>
+
+              <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                  <h2 className="text-2xl font-semibold text-[#142842]">Analytics Highlights</h2>
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
+                      <p className="text-sm font-semibold text-[#1e3757]">Weak Categories</p>
+                      {analyticsDetails && analyticsDetails.weakCategoryCounts.length > 0 ? (
+                        <div className="mt-3 space-y-2">
+                          {analyticsDetails.weakCategoryCounts.map((entry) => (
+                            <div key={entry.category} className="flex items-center justify-between rounded-md border border-[#e2e8f2] bg-white px-3 py-2 text-sm">
+                              <span className="text-[#1e3757]">{entry.category}</span>
+                              <span className="font-semibold text-[#1e3757]">{entry.misses} misses</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-sm text-[#5a6f8a]">No weak-category trend yet.</p>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
+                      <p className="text-sm font-semibold text-[#1e3757]">Score Bands</p>
+                      {scoreBandEntries.length > 0 ? (
+                        <div className="mt-3 space-y-2">
+                          {scoreBandEntries.map(([band, value]) => (
+                            <div key={band} className="flex items-center justify-between rounded-md border border-[#e2e8f2] bg-white px-3 py-2 text-sm">
+                              <span className="text-[#1e3757]">{band}</span>
+                              <span className="font-semibold text-[#1e3757]">{value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-sm text-[#5a6f8a]">No score-band distribution yet.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-5 rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-4">
+                    <p className="text-sm font-semibold text-[#1e3757]">Landing Traffic Sources</p>
+                    {landingSourceEntries.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {landingSourceEntries.map(([source, value]) => (
+                          <span
+                            key={source}
+                            className="inline-flex items-center rounded-full border border-[#cfdceb] bg-white px-3 py-1 text-sm text-[#1e3757]"
+                          >
+                            {source}: {value}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm text-[#5a6f8a]">No landing analytics events recorded yet.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                  <h2 className="mb-4 text-2xl font-semibold text-[#142842]">Recent Activity</h2>
+                  {stats && stats.recentActivity.length > 0 ? (
+                    <div className="space-y-3">
+                      {stats.recentActivity.map((activity, index) => (
+                        <div key={index} className="flex items-center justify-between rounded-lg border border-[#dbe5f1] bg-[#f8fbff] p-3">
+                          <div>
+                            <span className="font-medium text-[#1d3d61]">{activity.action}</span>
+                            <p className="text-sm text-[#5a6f8a]">{activity.user}</p>
+                          </div>
+                          <span className="text-xs text-[#5a6f8a]">{activity.timestamp.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[#5a6f8a]">No recent admin activity to display yet.</p>
+                  )}
+                </div>
+              </section>
+            </>
+          )}
+
+          {activeTab === 'batches' && (
+            <section className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-2xl font-semibold text-[#142842]">Administered Batches</h2>
@@ -1380,109 +1557,159 @@ export default function AdminPage() {
                 )}
               </div>
             )}
-          </section>
+            </section>
+          )}
 
-          <section className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-2xl font-semibold text-[#142842]">Quiz Leads</h2>
-                <p className="mt-1 text-sm text-[#5a6f8a]">
-                  Emails captured after quiz completion. Export to CSV or email participants.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button onClick={handleExportLeads} className="btn-secondary w-full sm:w-auto">
-                  Export CSV
-                </button>
-                <button onClick={handleEmailAll} className="btn-secondary w-full sm:w-auto">
-                  Email All
-                </button>
-              </div>
-            </div>
+          {activeTab === 'outreach' && (
+            <>
+              <section className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-[#142842]">Quiz Leads</h2>
+                    <p className="mt-1 text-sm text-[#5a6f8a]">
+                      Emails captured after quiz completion, with delivery tracking for detailed report sends.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={handleExportLeads} className="btn-secondary w-full sm:w-auto">
+                      Export CSV
+                    </button>
+                    <button onClick={handleEmailAll} className="btn-secondary w-full sm:w-auto">
+                      Email All
+                    </button>
+                  </div>
+                </div>
 
-            {leadsLoading ? (
-              <p className="mt-4 text-sm text-[#5a6f8a]">Loading leads...</p>
-            ) : leads.length > 0 ? (
-              <div className="mt-4 overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="text-xs uppercase tracking-wide text-[#5f7491]">
-                    <tr>
-                      <th className="px-3 py-2">Email</th>
-                      <th className="px-3 py-2">Usage</th>
-                      <th className="px-3 py-2">Self-Assessment</th>
-                      <th className="px-3 py-2">Difficulty</th>
-                      <th className="px-3 py-2">Captured</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leads.map((lead) => (
-                      <tr key={lead.id} className="border-t border-[#e2e8f2]">
-                        <td className="px-3 py-2 font-medium text-[#1e3757]">{lead.email}</td>
-                        <td className="px-3 py-2 text-[#5a6f8a]">{lead.usageFrequency}</td>
-                        <td className="px-3 py-2 text-[#5a6f8a]">{lead.selfAssessment}</td>
-                        <td className="px-3 py-2 text-[#5a6f8a]">{lead.difficultyLabel}</td>
-                        <td className="px-3 py-2 text-[#5a6f8a]">{lead.createdAt.toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="mt-4 text-sm text-[#5a6f8a]">No quiz leads captured yet.</p>
-            )}
-          </section>
+                {leadActionMessage ? (
+                  <div
+                    className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+                      leadActionTone === 'success'
+                        ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+                        : leadActionTone === 'warning'
+                          ? 'border border-amber-200 bg-amber-50 text-amber-800'
+                          : 'border border-red-200 bg-red-50 text-red-700'
+                    }`}
+                  >
+                    {leadActionMessage}
+                  </div>
+                ) : null}
 
-          <section className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-2xl font-semibold text-[#142842]">Training Requests</h2>
-                <p className="mt-1 text-sm text-[#5a6f8a]">
-                  Requests for training or internal assessments submitted from the training page.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button onClick={handleExportTrainingRequests} className="btn-secondary w-full sm:w-auto">
-                  Export CSV
-                </button>
-                <button onClick={handleEmailTrainingRequests} className="btn-secondary w-full sm:w-auto">
-                  Email All
-                </button>
-              </div>
-            </div>
+                {leadsLoading ? (
+                  <p className="mt-4 text-sm text-[#5a6f8a]">Loading leads...</p>
+                ) : leads.length > 0 ? (
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="text-xs uppercase tracking-wide text-[#5f7491]">
+                        <tr>
+                          <th className="px-3 py-2">Email</th>
+                          <th className="px-3 py-2">Score</th>
+                          <th className="px-3 py-2">Usage</th>
+                          <th className="px-3 py-2">Self-Assessment</th>
+                          <th className="px-3 py-2">Difficulty</th>
+                          <th className="px-3 py-2">Email Status</th>
+                          <th className="px-3 py-2">Captured</th>
+                          <th className="px-3 py-2">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leads.map((lead) => (
+                          <tr key={lead.id} className="border-t border-[#e2e8f2]">
+                            <td className="px-3 py-2 font-medium text-[#1e3757]">{lead.email}</td>
+                            <td className="px-3 py-2 text-[#5a6f8a]">{typeof lead.percentage === 'number' ? `${lead.percentage}%` : '—'}</td>
+                            <td className="px-3 py-2 text-[#5a6f8a]">{lead.usageFrequency}</td>
+                            <td className="px-3 py-2 text-[#5a6f8a]">{lead.selfAssessment}</td>
+                            <td className="px-3 py-2 text-[#5a6f8a]">{lead.difficultyLabel}</td>
+                            <td className="px-3 py-2">
+                              <div className="flex flex-col gap-1">
+                                <span className={`inline-flex w-fit rounded-full border px-2.5 py-1 text-xs font-semibold ${getLeadStatusTone(lead.reportEmailStatus)}`}>
+                                  {formatLeadStatus(lead.reportEmailStatus)}
+                                </span>
+                                {lead.reportEmailDeliveredAt ? (
+                                  <span className="text-xs text-[#5a6f8a]">
+                                    Delivered {lead.reportEmailDeliveredAt.toLocaleDateString()}
+                                  </span>
+                                ) : lead.reportEmailSentAt ? (
+                                  <span className="text-xs text-[#5a6f8a]">
+                                    Sent {lead.reportEmailSentAt.toLocaleDateString()}
+                                  </span>
+                                ) : lead.reportEmailError ? (
+                                  <span className="max-w-[220px] truncate text-xs text-red-600">{lead.reportEmailError}</span>
+                                ) : null}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 text-[#5a6f8a]">{lead.createdAt.toLocaleDateString()}</td>
+                            <td className="px-3 py-2">
+                              <button
+                                onClick={() => void handleResendLeadReport(lead)}
+                                className="btn-secondary w-full sm:w-auto"
+                                disabled={leadSendingId === lead.id}
+                              >
+                                {leadSendingId === lead.id ? 'Sending...' : 'Resend Report'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm text-[#5a6f8a]">No quiz leads captured yet.</p>
+                )}
+              </section>
 
-            {trainingRequestsLoading ? (
-              <p className="mt-4 text-sm text-[#5a6f8a]">Loading requests...</p>
-            ) : trainingRequests.length > 0 ? (
-              <div className="mt-4 overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="text-xs uppercase tracking-wide text-[#5f7491]">
-                    <tr>
-                      <th className="px-3 py-2">Type</th>
-                      <th className="px-3 py-2">Email</th>
-                      <th className="px-3 py-2">Phone</th>
-                      <th className="px-3 py-2">Organization</th>
-                      <th className="px-3 py-2">Notes</th>
-                      <th className="px-3 py-2">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {trainingRequests.map((request) => (
-                      <tr key={request.id} className="border-t border-[#e2e8f2]">
-                        <td className="px-3 py-2 text-[#1e3757]">{request.requestType}</td>
-                        <td className="px-3 py-2 text-[#1e3757]">{request.email}</td>
-                        <td className="px-3 py-2 text-[#5a6f8a]">{request.phone}</td>
-                        <td className="px-3 py-2 text-[#5a6f8a]">{request.organization}</td>
-                        <td className="px-3 py-2 text-[#5a6f8a]">{request.notes ?? '-'}</td>
-                        <td className="px-3 py-2 text-[#5a6f8a]">{request.createdAt.toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="mt-4 text-sm text-[#5a6f8a]">No training requests yet.</p>
-            )}
-          </section>
+              <section className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-[#142842]">Training Requests</h2>
+                    <p className="mt-1 text-sm text-[#5a6f8a]">
+                      Requests for training or internal assessments submitted from the training page.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={handleExportTrainingRequests} className="btn-secondary w-full sm:w-auto">
+                      Export CSV
+                    </button>
+                    <button onClick={handleEmailTrainingRequests} className="btn-secondary w-full sm:w-auto">
+                      Email All
+                    </button>
+                  </div>
+                </div>
+
+                {trainingRequestsLoading ? (
+                  <p className="mt-4 text-sm text-[#5a6f8a]">Loading requests...</p>
+                ) : trainingRequests.length > 0 ? (
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="text-xs uppercase tracking-wide text-[#5f7491]">
+                        <tr>
+                          <th className="px-3 py-2">Type</th>
+                          <th className="px-3 py-2">Email</th>
+                          <th className="px-3 py-2">Phone</th>
+                          <th className="px-3 py-2">Organization</th>
+                          <th className="px-3 py-2">Notes</th>
+                          <th className="px-3 py-2">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {trainingRequests.map((request) => (
+                          <tr key={request.id} className="border-t border-[#e2e8f2]">
+                            <td className="px-3 py-2 text-[#1e3757]">{request.requestType}</td>
+                            <td className="px-3 py-2 text-[#1e3757]">{request.email}</td>
+                            <td className="px-3 py-2 text-[#5a6f8a]">{request.phone}</td>
+                            <td className="px-3 py-2 text-[#5a6f8a]">{request.organization}</td>
+                            <td className="px-3 py-2 text-[#5a6f8a]">{request.notes ?? '-'}</td>
+                            <td className="px-3 py-2 text-[#5a6f8a]">{request.createdAt.toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm text-[#5a6f8a]">No training requests yet.</p>
+                )}
+              </section>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -1496,6 +1723,36 @@ function MetricCard({ label, value }: { label: string; value: string }) {
       <p className="mt-1 text-3xl font-bold text-[#142842]">{value}</p>
     </article>
   )
+}
+
+function formatLeadStatus(status?: string) {
+  if (!status) {
+    return 'Pending'
+  }
+
+  return status
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
+function getLeadStatusTone(status?: string) {
+  switch (status) {
+    case 'delivered':
+    case 'opened':
+    case 'clicked':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-800'
+    case 'sent':
+    case 'resent':
+    case 'delivery_delayed':
+      return 'border-blue-200 bg-blue-50 text-blue-800'
+    case 'bounced':
+    case 'failed':
+    case 'complained':
+    case 'suppressed':
+      return 'border-red-200 bg-red-50 text-red-700'
+    default:
+      return 'border-slate-200 bg-slate-50 text-slate-700'
+  }
 }
 
 function EmptyAnalyticsState({ message }: { message: string }) {

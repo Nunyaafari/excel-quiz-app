@@ -25,6 +25,7 @@ export const QUESTIONS_PER_PAGE = 5
 export const SESSION_SECONDS = 10 * 60
 
 const SURVEY_STORAGE_KEY = 'quizSurvey'
+const GUEST_USER_ID_STORAGE_KEY = 'quizGuestUserId'
 const QUESTION_CACHE_PREFIX = 'quizQuestionCache'
 const QUESTION_BANK_PREFIX = 'quizQuestionBank'
 const QUESTION_CACHE_TTL_MS = 10 * 60 * 1000
@@ -48,6 +49,37 @@ export interface LoadQuizSessionDataResult {
 
 function isBrowser(): boolean {
   return typeof window !== 'undefined'
+}
+
+function createGuestUserId(): string {
+  if (!isBrowser()) {
+    return `guest-${Date.now()}`
+  }
+
+  if (typeof window.crypto !== 'undefined' && typeof window.crypto.randomUUID === 'function') {
+    return `guest-${window.crypto.randomUUID()}`
+  }
+
+  return `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+export function getQuizParticipantId(explicitUserId?: string | null): string {
+  if (typeof explicitUserId === 'string' && explicitUserId.trim()) {
+    return explicitUserId.trim()
+  }
+
+  if (!isBrowser()) {
+    return 'guest-server'
+  }
+
+  const storedId = window.localStorage.getItem(GUEST_USER_ID_STORAGE_KEY)
+  if (storedId && storedId.trim()) {
+    return storedId
+  }
+
+  const generatedId = createGuestUserId()
+  window.localStorage.setItem(GUEST_USER_ID_STORAGE_KEY, generatedId)
+  return generatedId
 }
 
 export function getStoredSurvey(): QuizSurvey | null {
@@ -482,24 +514,30 @@ export async function saveQuizAttempt(options: {
     }
 
     return {
-      ...question,
+      id: question.id,
+      text: question.text,
+      category: question.category,
+      options: question.options,
+      correctAnswer: question.correctAnswer,
       userAnswer,
       isCorrect,
     }
   })
 
+  const resolvedBatchId = batchInfo?.id ?? batchId
+
   const attemptPayload = {
     userId,
-    batchId: batchInfo?.id ?? (batchId || undefined),
     source,
     score,
     totalQuestions: questions.length,
     correctAnswers: score / 10,
-    survey: survey ?? undefined,
     categoryScores,
     wrongCategories: Array.from(wrongCategories),
     date: endTime,
     questions: resolvedQuestions,
+    ...(resolvedBatchId ? { batchId: resolvedBatchId } : {}),
+    ...(survey ? { survey } : {}),
   }
 
   if (isBrowser()) {

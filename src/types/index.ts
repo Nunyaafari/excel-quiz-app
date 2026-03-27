@@ -179,6 +179,15 @@ export interface QuizLead {
   selfAssessment: string
   difficultyLabel: string
   createdAt: Date
+  percentage?: number
+  reportEmailStatus?: string
+  reportEmailId?: string
+  reportEmailError?: string
+  reportEmailSentAt?: Date
+  reportEmailDeliveredAt?: Date
+  reportEmailFailedAt?: Date
+  reportEmailOpenedAt?: Date
+  reportEmailClickedAt?: Date
 }
 
 export interface QuizBatch {
@@ -227,4 +236,25 @@ export interface TrainingRequest {
   notes?: string
   createdAt: Date
   userId?: string
+}
+
+export interface BlogPost {
+  id: string
+  title: string
+  slug: string
+  excerpt: string
+  content: string
+  category: string
+  tags: string[]
+  authorName: string
+  coverImageUrl?: string
+  status: 'draft' | 'published'
+  featured: boolean
+  focusKeyword?: string
+  seoTitle?: string
+  seoDescription?: string
+  seoKeywords: string[]
+  createdAt: Date
+  updatedAt: Date
+  publishedAt?: Date
 }

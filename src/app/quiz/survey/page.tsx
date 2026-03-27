@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useAuth } from '@/lib/auth'
 import type { QuizSurvey } from '@/types'
 
 const SURVEY_STORAGE_KEY = 'quizSurvey'
@@ -51,8 +50,7 @@ function getStoredSurvey(): QuizSurvey | null {
   }
 }
 
-export default function QuizSurveyPage() {
-  const { user, loading } = useAuth()
+function QuizSurveyPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const attemptToken = searchParams.get('attempt')
@@ -61,21 +59,12 @@ export default function QuizSurveyPage() {
   const [selfAssessment, setSelfAssessment] = useState<QuizSurvey['selfAssessment']>('Novice')
 
   useEffect(() => {
-    if (loading) {
-      return
-    }
-
-    if (!user) {
-      router.push('/')
-      return
-    }
-
     const stored = getStoredSurvey()
     if (stored) {
       setUsageFrequency(stored.usageFrequency)
       setSelfAssessment(stored.selfAssessment)
     }
-  }, [loading, user, router])
+  }, [])
 
   const handleContinue = () => {
     const survey: QuizSurvey = {
@@ -89,18 +78,6 @@ export default function QuizSurveyPage() {
     const nextAttempt = attemptToken || Date.now().toString()
     const sourceParam = source ? `&source=${encodeURIComponent(source)}` : ''
     router.push(`/quiz?attempt=${nextAttempt}${sourceParam}`)
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-excel-green"></div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return null
   }
 
   return (
@@ -171,5 +148,21 @@ export default function QuizSurveyPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+function QuizSurveyLoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-excel-green"></div>
+    </div>
+  )
+}
+
+export default function QuizSurveyPage() {
+  return (
+    <Suspense fallback={<QuizSurveyLoadingScreen />}>
+      <QuizSurveyPageContent />
+    </Suspense>
   )
 }

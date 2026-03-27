@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { useAuth } from '@/lib/auth'
@@ -19,7 +19,7 @@ const requestCopy: Record<RequestType, { title: string; subtitle: string }> = {
   },
 }
 
-export default function TrainingRequestPage() {
+function TrainingRequestPageContent() {
   const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -154,5 +154,21 @@ export default function TrainingRequestPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+function TrainingRequestLoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-excel-green"></div>
+    </div>
+  )
+}
+
+export default function TrainingRequestPage() {
+  return (
+    <Suspense fallback={<TrainingRequestLoadingScreen />}>
+      <TrainingRequestPageContent />
+    </Suspense>
   )
 }

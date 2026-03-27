@@ -1,19 +1,22 @@
 {
-  "firestore": {
-    "rules": "firestore.rules"
-  },
-  "hosting": {
-    "public": "out",
+  "apphosting": {
+    "backendId": "quiz",
+    "rootDir": ".",
     "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
+      "node_modules",
+      ".git",
+      ".next",
+      ".next_cache_*",
+      ".env*",
+      ".DS_Store",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      "functions",
+      "*.docx"
     ]
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   }
 }

@@ -20,6 +20,7 @@ export default function ChatWidget() {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [bottomOffset, setBottomOffset] = useState(20)
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
   const historyPayload = useMemo(
@@ -36,6 +37,44 @@ export default function ChatWidget() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages, open])
+
+  useEffect(() => {
+    let frameId = 0
+
+    const updateOffset = () => {
+      frameId = 0
+
+      const footer = document.querySelector('footer')
+      if (!(footer instanceof HTMLElement)) {
+        setBottomOffset(20)
+        return
+      }
+
+      const footerRect = footer.getBoundingClientRect()
+      const footerOverlap = Math.max(0, window.innerHeight - footerRect.top)
+      setBottomOffset(footerOverlap > 0 ? footerOverlap + 20 : 20)
+    }
+
+    const scheduleUpdate = () => {
+      if (frameId !== 0) {
+        return
+      }
+
+      frameId = window.requestAnimationFrame(updateOffset)
+    }
+
+    scheduleUpdate()
+    window.addEventListener('scroll', scheduleUpdate, { passive: true })
+    window.addEventListener('resize', scheduleUpdate)
+
+    return () => {
+      if (frameId !== 0) {
+        window.cancelAnimationFrame(frameId)
+      }
+      window.removeEventListener('scroll', scheduleUpdate)
+      window.removeEventListener('resize', scheduleUpdate)
+    }
+  }, [])
 
   const handleSend = async () => {
     const trimmed = input.trim()
@@ -83,9 +122,9 @@ export default function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-50">
+    <div className="fixed right-4 z-50 sm:right-5" style={{ bottom: `${bottomOffset}px` }}>
       {open && (
-        <div className="mb-3 w-[320px] overflow-hidden rounded-2xl border border-[#d9e3ef] bg-white shadow-xl">
+        <div className="mb-3 w-[min(320px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#d9e3ef] bg-white shadow-xl">
           <div className="bg-gradient-to-br from-[#0f2744] via-[#144d6a] to-[#1f6f6d] px-4 py-3 text-white">
             <div className="flex items-center justify-between">
               <div>

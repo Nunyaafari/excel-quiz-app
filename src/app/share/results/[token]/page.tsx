@@ -2,7 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { buildMetadata } from '@/lib/seo'
-import { buildShareResultsPath, decodeShareResultsToken } from '@/lib/share-results'
+import {
+  buildShareResultsDescription,
+  buildShareResultsImagePath,
+  buildShareResultsPath,
+  buildShareResultsTitle,
+  decodeShareResultsToken,
+} from '@/lib/share-results'
 
 type ShareResultsPageProps = {
   params: Promise<{
@@ -23,10 +29,10 @@ export async function generateMetadata({ params }: ShareResultsPageProps): Promi
     })
   }
 
-  const title = `Dare to Take the Quiz: ${snapshot.percentage}% on Excel Mastery Quiz`
-  const description = `${snapshot.performanceLabel} performance, ${snapshot.correctAnswers}/${snapshot.totalQuestions} correct, ${snapshot.profileLabel}.`
+  const title = buildShareResultsTitle(snapshot)
+  const description = buildShareResultsDescription(snapshot)
   const path = buildShareResultsPath(snapshot)
-  const imagePath = `/api/share-badge/${token}`
+  const imagePath = buildShareResultsImagePath(token)
   const imageUrl = new URL(imagePath, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').toString()
 
   return {
@@ -72,9 +78,9 @@ export default async function SharedResultsPage({ params }: ShareResultsPageProp
 
   const scoreColor =
     snapshot.percentage >= 80 ? 'text-emerald-600' : snapshot.percentage >= 60 ? 'text-amber-600' : 'text-red-600'
-  const sharePath = buildShareResultsPath(snapshot)
-  const badgeImagePath = `/api/share-badge/${token}`
+  const badgeImagePath = buildShareResultsImagePath(token)
   const badgeAlt = `Excel quiz badge showing ${snapshot.percentage}% and ${snapshot.performanceLabel}`
+  const resultDescription = buildShareResultsDescription(snapshot)
 
   return (
     <div className="min-h-screen bg-[#eef2f6] py-8 md:py-12">
@@ -82,9 +88,9 @@ export default async function SharedResultsPage({ params }: ShareResultsPageProp
         <div className="mx-auto max-w-5xl space-y-8">
           <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f2744] via-[#144d6a] to-[#1f6f6d] p-6 text-white shadow-xl md:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#c8e8ff]">Shared Excel Quiz Result</p>
-            <h1 className="mt-2 text-3xl font-bold md:text-5xl">Dare to Take the Quiz</h1>
+            <h1 className="mt-2 text-3xl font-bold md:text-5xl">Excel Quiz Result</h1>
             <p className="mt-3 max-w-3xl text-sm text-[#d6ebff] md:text-base">
-              This public summary shows the badge and score snapshot from an Excel Mastery Quiz attempt.
+              {resultDescription}
             </p>
 
             <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[0.95fr_1.05fr]">
@@ -107,9 +113,9 @@ export default async function SharedResultsPage({ params }: ShareResultsPageProp
               </div>
 
               <div className="rounded-2xl border border-white/20 bg-white/10 p-6 backdrop-blur-sm">
-                <h2 className="text-2xl font-semibold text-white">Take the Quiz Yourself</h2>
+                <h2 className="text-2xl font-semibold text-white">Excel Quiz Result</h2>
                 <p className="mt-3 text-sm leading-relaxed text-[#d6ebff]">
-                  Get your own score, download a badge, and unlock the full breakdown after submitting your email.
+                  This public card shows the exact performance snapshot that was shared from an Excel Mastery Quiz attempt.
                 </p>
 
                 <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 type ChatMessage = {
   id: string
@@ -15,6 +16,7 @@ const starterMessage: ChatMessage = {
 }
 
 export default function ChatWidget() {
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([starterMessage])
   const [input, setInput] = useState('')
@@ -22,6 +24,7 @@ export default function ChatWidget() {
   const [error, setError] = useState<string | null>(null)
   const [bottomOffset, setBottomOffset] = useState(20)
   const scrollRef = useRef<HTMLDivElement | null>(null)
+  const hideOnQuizRoute = pathname === '/quiz' || pathname.startsWith('/quiz/')
 
   const historyPayload = useMemo(
     () =>
@@ -37,6 +40,12 @@ export default function ChatWidget() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages, open])
+
+  useEffect(() => {
+    if (hideOnQuizRoute) {
+      setOpen(false)
+    }
+  }, [hideOnQuizRoute])
 
   useEffect(() => {
     let frameId = 0
@@ -119,6 +128,10 @@ export default function ChatWidget() {
     } finally {
       setSending(false)
     }
+  }
+
+  if (hideOnQuizRoute) {
+    return null
   }
 
   return (

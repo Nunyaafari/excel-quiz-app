@@ -1,23 +1,26 @@
 'use client'
 
 import { useState } from 'react'
+import type { StaticImageData } from 'next/image'
 import { useRouter } from 'next/navigation'
-
-type TrainingProgram = {
-  id: string
-  title: string
-  duration: string
-  objectives: string[]
-  outline: string[]
-  description: string
-}
+import StarRating from '@/components/StarRating'
+import { buildTrainingModulePdfPath, freeExcelResourceHub } from '@/lib/site-resources'
+import { trainingPrograms } from '@/lib/training-content'
+import facilitatorPortrait from '../../../public/training/facilitator-portrait.jpeg'
+import session1Image from '../../../public/training/session-1.jpg'
+import session2Image from '../../../public/training/session-2.jpg'
+import session3Image from '../../../public/training/session-3.jpg'
+import session4Image from '../../../public/training/session-4.jpg'
+import session5Image from '../../../public/training/session-5.jpg'
+import session6Image from '../../../public/training/session-6.jpg'
+import session7Image from '../../../public/training/session-7.jpg'
 
 type TrainingGalleryItem = {
   id: string
   title: string
   caption: string
   stat: string
-  imageSrc: string
+  imageSrc: StaticImageData
 }
 
 type TrainingTestimonial = {
@@ -29,126 +32,55 @@ type TrainingTestimonial = {
   outcome: string
 }
 
-const programs: TrainingProgram[] = [
-  {
-    id: 'program-remote',
-    title: 'Microsoft Excel Foundation',
-    duration: '6 hrs total',
-    objectives: [
-      'Provide participants with a foundational understanding of Excel.',
-      'Teach participants how to create, format, and manipulate Excel worksheets.',
-      'Introduce basic Excel functions and formulas.',
-      'Enable participants to confidently use Excel for common tasks.',
-    ],
-    outline: [
-      'Module 1: Introduction to Excel - Overview of Excel, interface, navigating worksheets, creating and opening workbooks.',
-      'Module 2: Data Entry and Formatting - Entering and editing data, formatting fonts and borders, alignment, wrapping, fill colors, and shading.',
-      'Module 3: Cell Functions and Formulas - Functions vs formulas, SUM, AVERAGE, COUNT, basic arithmetic formulas, relative vs absolute references.',
-      'Module 4: Data Management - Sorting, filtering, removing duplicates, and data validation rules.',
-      'Module 5: Charts and Graphs - Creating charts, formatting and customizing charts, adding data labels, inserting charts into worksheets.',
-      'Module 6: Printing and Sharing - Preparing worksheets for printing, page setup, print preview, sharing, and exporting files.',
-      'Module 7: Recap and Q&A - Review of key concepts, clarification, and assessment.',
-    ],
-    description:
-      'Designed for beginners who need a structured path to confident, accurate Excel work.',
-  },
-  {
-    id: 'program-onsite',
-    title: 'Intermediate Excel Training',
-    duration: '6 hrs total',
-    objectives: [
-      'Build on foundational Excel skills with stronger data analysis capability.',
-      'Develop confidence with advanced formulas, automation, and reporting.',
-      'Handle more complex spreadsheet and consolidation tasks efficiently.',
-      'Use Excel features that support faster analysis and clearer presentation.',
-    ],
-    outline: [
-      'Session 1: Excel Hacks and Techniques - Data selection strategies, Autofill and Flash Fill, Find & Replace, Named Ranges, Paste Special.',
-      'Session 2: Exploring Advanced Formulas and Functions - IF, AND, OR, VLOOKUP, HLOOKUP, ROUND, MOD, text functions, SUMIF, AVERAGEIF, COUNTIF, date functions, MEDIAN, RANK, LARGE.',
-      'Session 3: Data Consolidation and Data Tables - Subtotals and grouping, Freeze Panes, consolidating data from multiple worksheets, creating Excel tables.',
-      'Session 4: Advanced Charting and Graphical Data Presentation - Advanced chart types, combining charts, dynamic titles and labels, chart elements.',
-      'Session 6: PivotTables and PivotCharts - Introduction to PivotTables, creating PivotTables from large datasets, formatting PivotTables, creating PivotCharts.',
-      'Session 7: Module Conclusion and Q&A - Recap of key learnings, participant questions, clarification, and assessment.',
-    ],
-    description:
-      'A practical module for analysts and coordinators who already use Excel regularly and need stronger automation skills.',
-  },
-  {
-    id: 'program-offsite',
-    title: 'Advanced Excel Training',
-    duration: '6 hrs total',
-    objectives: [
-      'Become proficient in advanced techniques for data analysis and automation.',
-      'Strengthen complex modeling, advanced visualization, and business analysis skills.',
-      'Use advanced Excel tools for decision support and interactive reporting.',
-      'Introduce automation with Macros, VBA, and Power Pivot.',
-    ],
-    outline: [
-      'Session 1: Advanced Formulas and Functions - Array formulas, INDEX and MATCH, financial functions, ISERROR, IFERROR, XLOOKUP, VSTACK, CHOOSE, SEQUENCE, RAND, RANDBETWEEN, AGGREGATE, TRANSPOSE.',
-      'Session 2: Advanced PivotTables and PivotCharts - Calculated fields and items, custom measures, interactive dashboards with PivotCharts.',
-      'Session 3: Data Validation and Advanced Filtering Mastery - Tailored validation rules, dropdown lists, advanced sorting, advanced filtering.',
-      'Session 4: Conditional Formatting - Applying conditional formatting rules and creating custom formatting logic.',
-      'Session 5: Advanced Data Visualization - Advanced chart customization, combo charts, waterfall charts, sparklines, and data bars.',
-      'Session 6: Advanced Data Analysis Techniques - Scenario Manager, Goal Seek, Solver, Data Tables, VAR, STDEV.P.',
-      'Session 6: Automation with Macros and VBA - Introduction to Macros, recording and editing Macros.',
-      'Session 6: Power Pivot - Introduction to Power Pivot and creating relationships between tables.',
-      'Session 7: Advanced Workbook Management and Collaboration - Excel Online collaboration and protecting workbooks with advanced security settings.',
-      'Session 8: Module Conclusion and Q&A - Recap, participant clarification, and assessment.',
-    ],
-    description:
-      'For power users and analysts who need advanced modeling, automation, and visualization capabilities.',
-  },
-]
-
 const galleryItems: TrainingGalleryItem[] = [
   {
     id: 'gallery-session-1',
     title: 'Hands-On Excel Bootcamp',
     caption: 'Participants work through guided spreadsheets, live demos, and practical reporting drills.',
     stat: 'Live labs + coached practice',
-    imageSrc: '/training/session-1.jpg',
+    imageSrc: session1Image,
   },
   {
     id: 'gallery-session-2',
     title: 'Reporting and Dashboard Practice',
     caption: 'Teams build charts, pivots, and decision-ready reports from realistic business cases.',
     stat: 'Reporting workflows',
-    imageSrc: '/training/session-2.jpg',
+    imageSrc: session2Image,
   },
   {
     id: 'gallery-session-3',
     title: 'Facilitated Group Coaching',
     caption: 'Small-group coaching keeps every learner engaged while strengthening confidence and accuracy.',
     stat: 'Interactive delivery',
-    imageSrc: '/training/session-3.jpg',
+    imageSrc: session3Image,
   },
   {
     id: 'gallery-session-4',
     title: 'Corporate Cohort Sessions',
     caption: 'Cross-functional teams learn shared standards for analysis, formatting, and spreadsheet review.',
     stat: 'Corporate cohorts',
-    imageSrc: '/training/session-4.jpg',
+    imageSrc: session4Image,
   },
   {
     id: 'gallery-session-5',
     title: 'Instructor-Led Walkthroughs',
     caption: 'Facilitators break down formulas, workflows, and shortcuts in a clear, applied way.',
     stat: 'Step-by-step instruction',
-    imageSrc: '/training/session-5.jpg',
+    imageSrc: session5Image,
   },
   {
     id: 'gallery-session-6',
     title: 'Applied Workplace Exercises',
     caption: 'Learners practice with realistic tasks that mirror finance, admin, and operations reporting work.',
     stat: 'Workplace scenarios',
-    imageSrc: '/training/session-6.jpg',
+    imageSrc: session6Image,
   },
   {
     id: 'gallery-session-7',
     title: 'Team-Based Practice and Review',
     caption: 'Sessions close with hands-on practice, discussion, and takeaways teams can use immediately.',
     stat: 'Practice + review',
-    imageSrc: '/training/session-7.jpg',
+    imageSrc: session7Image,
   },
 ]
 
@@ -230,11 +162,17 @@ export default function TrainingProgramsPage() {
             >
               Back to Results
             </button>
+            <a
+              href={freeExcelResourceHub.href}
+              className="rounded-xl border border-white/35 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
+            >
+              {freeExcelResourceHub.label}
+            </a>
           </div>
         </section>
 
         <section className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-3">
-          {programs.map((program) => (
+          {trainingPrograms.map((program) => (
             <article key={program.id} className="rounded-2xl border border-[#d9e3ef] bg-white p-6 shadow-sm">
               {(() => {
                 const isExpanded = expandedProgramIds.includes(program.id)
@@ -270,9 +208,15 @@ export default function TrainingProgramsPage() {
                   {isExpanded ? 'Collapse full outline' : 'View full outline'}
                 </button>
               )}
+              <a
+                href={buildTrainingModulePdfPath(program.id)}
+                className="btn-primary mt-5 block w-full text-center"
+              >
+                Download ATI Module PDF
+              </a>
               <button
                 onClick={() => router.push('/quiz/results')}
-                className="btn-secondary mt-5 w-full"
+                className="btn-secondary mt-3 w-full"
               >
                 Back to Results
               </button>
@@ -301,7 +245,7 @@ export default function TrainingProgramsPage() {
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-[#dce8f4]">
                     <img
-                      src={item.imageSrc}
+                      src={item.imageSrc.src}
                       alt={item.title}
                       className="h-full w-full object-cover"
                     />
@@ -332,6 +276,7 @@ export default function TrainingProgramsPage() {
           <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
             {testimonials.map((testimonial) => (
               <article key={testimonial.id} className="rounded-2xl border border-[#dbe5f1] bg-[#f9fbff] p-5 shadow-sm">
+                <StarRating rating={5} sizeClassName="text-lg" labelClassName="text-xs font-medium text-[#5f7390]" />
                 <p className="text-3xl leading-none text-[#1f6f6d]">“</p>
                 <p className="mt-3 text-sm leading-relaxed text-[#304b67]">{testimonial.quote}</p>
                 <p className="mt-4 rounded-xl bg-white px-4 py-3 text-sm font-medium text-[#1e3757] shadow-sm">
@@ -368,7 +313,7 @@ export default function TrainingProgramsPage() {
             <div>
               <div className="overflow-hidden rounded-2xl border border-[#dbe5f1] bg-[#f7faff] shadow-sm">
                 <img
-                  src="/training/facilitator-portrait.jpeg"
+                  src={facilitatorPortrait.src}
                   alt="Kwame Nunya Afari, Excel trainer and facilitator"
                   className="h-full w-full object-cover"
                 />

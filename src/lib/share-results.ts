@@ -216,3 +216,15 @@ export function decodeShareResultsToken(token: string): ShareResultsSnapshot | n
 export function buildShareResultsPath(snapshot: ShareResultsSnapshot) {
   return `/share/results/${encodeShareResultsToken(snapshot)}`
 }
+
+export function buildShareResultsImagePath(token: string) {
+  return `/share/results/${token}/opengraph-image?v=4`
+}
+
+export function buildShareResultsTitle(snapshot: ShareResultsSnapshot) {
+  return `I scored ${snapshot.percentage}%. Dare to take Excel Mastery Quiz?`
+}
+
+export function buildShareResultsDescription(snapshot: ShareResultsSnapshot) {
+  return `${snapshot.performanceLabel} performance, ${snapshot.correctAnswers}/${snapshot.totalQuestions} correct, ${snapshot.profileLabel}, completed ${snapshot.completedLabel}.`
+}

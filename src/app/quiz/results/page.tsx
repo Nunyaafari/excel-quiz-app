@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { db } from '@/lib/firebase'
 import { QuizAttempt, TrainingMaterial, Recommendation } from '@/types'
-import { buildShareResultsPath } from '@/lib/share-results'
+import { buildShareResultsImagePath, buildShareResultsPath } from '@/lib/share-results'
 import { getQuizParticipantId } from '@/lib/quiz-session'
 import { addDoc, collection, getDocs, limit, orderBy, query, serverTimestamp, where } from 'firebase/firestore'
 import { Bar } from 'react-chartjs-2'
@@ -619,7 +619,7 @@ export default function ResultsPage() {
   })
   const shareBaseUrl = resolveShareBaseUrl()
   const shareToken = sharePath.split('/').at(-1) ?? ''
-  const badgeImagePath = `/api/share-badge/${shareToken}`
+  const badgeImagePath = buildShareResultsImagePath(shareToken)
   const shareUrl = `${shareBaseUrl}${sharePath}`
   const shareRequiresPublicUrl = isLocalhostUrl(shareUrl)
   const shareCaption = buildShareCaption({

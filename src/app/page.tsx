@@ -1,6 +1,8 @@
 'use client'
 
+import StarRating from '@/components/StarRating'
 import { useAuth } from '@/lib/auth'
+import { freeExcelResourceHub } from '@/lib/site-resources'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FirebaseError } from 'firebase/app'
@@ -263,11 +265,26 @@ export default function Home() {
                   Start Assessment
                 </button>
                 <button
+                  onClick={() => router.push('/training')}
+                  className="btn-hero-secondary w-full sm:w-auto"
+                >
+                  View Training Programs
+                </button>
+                <button
                   onClick={() => router.push('/blog')}
                   className="btn-hero-secondary w-full sm:w-auto"
                 >
                   Explore Excel Blog
                 </button>
+              </div>
+
+              <div className="mt-3">
+                <a
+                  href={freeExcelResourceHub.href}
+                  className="inline-flex w-full items-center justify-center rounded-xl border border-white/30 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15 sm:w-auto"
+                >
+                  {freeExcelResourceHub.label}
+                </a>
               </div>
 
               <div className="mt-8 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
@@ -360,7 +377,9 @@ export default function Home() {
                   {featuredReviews.map((review) => (
                     <article key={review.id} className="rounded-xl border border-[#dbe5f1] bg-[#f9fbff] p-4">
                       <p className="text-sm font-semibold text-[#1a2e49]">{review.displayName}</p>
-                      <p className="mt-1 text-xs text-[#5f7390]">Rating {review.rating}/5</p>
+                      <div className="mt-1">
+                        <StarRating rating={review.rating} />
+                      </div>
                       <p className="mt-3 text-sm text-[#5a6f8a]">{review.comment}</p>
                     </article>
                   ))}

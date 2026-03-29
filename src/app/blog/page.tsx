@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import BlogPostCard from '@/components/blog/BlogPostCard'
 import { filterBlogPosts, findBlogCategoryBySlug, findBlogTagBySlug, getBlogCategories, getBlogTags, getPublishedBlogPosts } from '@/lib/blog'
+import { freeExcelResourceHub } from '@/lib/site-resources'
 import { buildMetadata, longTailSeoKeywords } from '@/lib/seo'
 
 export const metadata: Metadata = buildMetadata({
@@ -89,6 +90,14 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                 </Link>
               ) : null}
             </form>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link href="/training" className="btn-hero-secondary w-full sm:w-auto">
+                View Training Programs
+              </Link>
+              <Link href={freeExcelResourceHub.href} className="btn-hero-secondary w-full sm:w-auto text-center">
+                {freeExcelResourceHub.label}
+              </Link>
+            </div>
           </section>
 
           <section className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -103,9 +112,14 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                     {activeTag ? ` tagged ${activeTag.name}` : ''}.
                   </p>
                 </div>
-                <Link href="/training" className="btn-secondary w-full sm:w-auto">
-                  Explore Training Programs
-                </Link>
+                <div className="flex w-full flex-wrap gap-3 sm:w-auto">
+                  <Link href="/training" className="btn-secondary w-full sm:w-auto">
+                    Explore Training Programs
+                  </Link>
+                  <Link href={freeExcelResourceHub.href} className="btn-secondary w-full sm:w-auto text-center">
+                    Free Resources
+                  </Link>
+                </div>
               </div>
 
               {(query || activeCategory || activeTag) ? (

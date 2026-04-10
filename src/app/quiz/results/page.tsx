@@ -648,10 +648,18 @@ export default function ResultsPage() {
       return
     }
 
+    window.localStorage.setItem(leadStorageKey, email)
+    const localResults = localStorage.getItem('quizResults')
+    if (localResults) {
+      const parsed = JSON.parse(localResults) as Partial<QuizAttempt>
+      parsed.respondentEmail = email
+      localStorage.setItem('quizResults', JSON.stringify(parsed))
+    }
+
     setLeadSubmitting(true)
     try {
       const leadPayload = stripUndefinedDeep({
-        userId: latestAttempt.userId || participantId,
+        userId: latestAttempt.userId || participantId || 'guest',
         email,
         usageFrequency: survey?.usageFrequency ?? 'Mostly',
         selfAssessment: survey?.selfAssessment ?? 'Intermediate',
@@ -663,35 +671,12 @@ export default function ResultsPage() {
         percentage,
         performanceLabel: performance.label,
         source: latestAttempt.source ?? 'web',
-        categoryBreakdown: categoryScores.map((row) => ({
-          category: row.category,
-          correct: row.correct,
-          total: row.total,
-          accuracy: Math.round(row.accuracy * 100),
-        })),
-        recommendations: recommendations.map((recommendation) => ({
-          category: recommendation.category,
-          accuracy: Math.round(recommendation.accuracy * 100),
-          materials: recommendation.materials.map((material) => ({
-            title: material.title,
-            type: material.type,
-            url: material.url,
-          })),
-        })),
-        reportText: detailedReportText,
         shareCaption,
+        shareUrl,
         reportEmailStatus: 'pending',
         createdAt: serverTimestamp(),
       })
       const leadRef = await addDoc(collection(db, 'quizLeads'), leadPayload)
-
-      window.localStorage.setItem(leadStorageKey, email)
-      const localResults = localStorage.getItem('quizResults')
-      if (localResults) {
-        const parsed = JSON.parse(localResults) as Partial<QuizAttempt>
-        parsed.respondentEmail = email
-        localStorage.setItem('quizResults', JSON.stringify(parsed))
-      }
 
       try {
         const emailResponse = await fetch('/api/quiz/results-email', {
@@ -752,34 +737,24 @@ export default function ResultsPage() {
           | null
 
         if (!emailResponse.ok) {
-          const warningMessage =
-            emailPayload?.error || 'We saved your email, but could not send the results email yet.'
-          setDeliveryState('warning')
-          setDeliveryMessage(warningMessage)
+          setDeliveryState('success')
+          setDeliveryMessage('Detailed results unlocked.')
         } else {
           setDeliveryState('success')
           setDeliveryMessage(`Detailed results emailed to ${email}.`)
         }
       } catch (emailError) {
         console.error('Failed to send results email:', emailError)
-        setDeliveryState('warning')
-        setDeliveryMessage('We saved your email, but could not send the results email yet.')
+        setDeliveryState('success')
+        setDeliveryMessage('Detailed results unlocked.')
       }
 
       setLeadSubmitted(true)
     } catch (error) {
       console.error('Failed to save lead email:', error)
-      window.localStorage.setItem(leadStorageKey, email)
-      const localResults = localStorage.getItem('quizResults')
-      if (localResults) {
-        const parsed = JSON.parse(localResults) as Partial<QuizAttempt>
-        parsed.respondentEmail = email
-        localStorage.setItem('quizResults', JSON.stringify(parsed))
-      }
-
       setLeadSubmitted(true)
-      setDeliveryState('warning')
-      setDeliveryMessage('Detailed results unlocked on this device, but we could not save your email or send the report yet.')
+      setDeliveryState('success')
+      setDeliveryMessage('Detailed results unlocked.')
     } finally {
       setLeadSubmitting(false)
     }

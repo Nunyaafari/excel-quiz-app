@@ -218,7 +218,7 @@ export function buildShareResultsPath(snapshot: ShareResultsSnapshot) {
 }
 
 export function buildShareResultsImagePath(token: string) {
-  return `/share/results/${token}/opengraph-image?v=4`
+  return `/share/results/${token}/opengraph-image?v=5`
 }
 
 export function buildShareResultsTitle(snapshot: ShareResultsSnapshot) {

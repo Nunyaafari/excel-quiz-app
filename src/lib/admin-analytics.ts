@@ -8,6 +8,7 @@ export interface AdminAnalyticsSnapshot extends AdminStats {
   sourceDistribution: Record<string, number>
   landingSourceDistribution: Record<string, number>
   scoreBandDistribution: Record<string, number>
+  difficultyLevelDistribution: Record<string, number>
   dailyAttempts: Array<{
     date: string
     attempts: number
@@ -92,30 +93,63 @@ export async function getAdminAnalyticsSnapshot(): Promise<AdminAnalyticsSnapsho
       '60-79': 0,
       '80-100': 0,
     }
+    const difficultyLevelDistribution: Record<string, number> = {
+      '1': 0,
+      '2': 0,
+      '3': 0,
+      '4': 0,
+      '5': 0,
+    }
     const dailyAttemptsByDate: Record<string, number> = {}
     const weakCategoryMap: Record<string, number> = {}
 
-    let totalScore = 0
+    let totalPercentage = 0
 
     attemptsSnap.forEach((docSnap) => {
       const data = docSnap.data() as {
         score?: unknown
+        correctAnswers?: unknown
+        totalQuestions?: unknown
         source?: unknown
         date?: unknown
         categoryScores?: unknown
         wrongCategories?: unknown
         questions?: unknown
+        survey?: unknown
       }
 
       const score = typeof data.score === 'number' ? data.score : 0
-      totalScore += score
+      const totalQuestions =
+        typeof data.totalQuestions === 'number' && data.totalQuestions > 0 ? data.totalQuestions : 0
+      const correctAnswers =
+        typeof data.correctAnswers === 'number'
+          ? data.correctAnswers
+          : totalQuestions > 0
+            ? Math.round(score / 10)
+            : 0
+
+      const rawPercentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0
+      const percentage = Math.max(0, Math.min(100, rawPercentage))
+      totalPercentage += percentage
 
       const source = normalizeChannel(data.source)
       increment(sourceDistribution, source)
-      increment(scoreBandDistribution, getScoreBand(score))
+      increment(scoreBandDistribution, getScoreBand(percentage))
 
       const attemptDate = toDate(data.date)
       increment(dailyAttemptsByDate, formatDay(attemptDate))
+
+      if (data.survey && typeof data.survey === 'object' && 'difficultyLevels' in data.survey) {
+        const survey = data.survey as { difficultyLevels?: unknown }
+        if (Array.isArray(survey.difficultyLevels)) {
+          survey.difficultyLevels.forEach((level) => {
+            const numeric = typeof level === 'number' ? level : Number(level)
+            if ([1, 2, 3, 4, 5].includes(numeric)) {
+              increment(difficultyLevelDistribution, String(numeric))
+            }
+          })
+        }
+      }
 
       if (data.categoryScores && typeof data.categoryScores === 'object') {
         Object.entries(data.categoryScores as Record<string, unknown>).forEach(([category, value]) => {
@@ -158,6 +192,8 @@ export async function getAdminAnalyticsSnapshot(): Promise<AdminAnalyticsSnapsho
     const attemptActivities = recentAttemptsSnap.docs.map((docSnap) => {
       const data = docSnap.data() as {
         score?: unknown
+        correctAnswers?: unknown
+        totalQuestions?: unknown
         userId?: unknown
         respondentEmail?: unknown
         date?: unknown
@@ -165,6 +201,16 @@ export async function getAdminAnalyticsSnapshot(): Promise<AdminAnalyticsSnapsho
       }
 
       const score = typeof data.score === 'number' ? data.score : 0
+      const totalQuestions =
+        typeof data.totalQuestions === 'number' && data.totalQuestions > 0 ? data.totalQuestions : 0
+      const correctAnswers =
+        typeof data.correctAnswers === 'number'
+          ? data.correctAnswers
+          : totalQuestions > 0
+            ? Math.round(score / 10)
+            : 0
+      const rawPercentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0
+      const percentage = Math.max(0, Math.min(100, rawPercentage))
       const label =
         typeof data.respondentEmail === 'string' && data.respondentEmail.trim()
           ? data.respondentEmail
@@ -173,7 +219,7 @@ export async function getAdminAnalyticsSnapshot(): Promise<AdminAnalyticsSnapsho
             : 'participant'
 
       return {
-        action: `Quiz completed via ${normalizeChannel(data.source)} (${score})`,
+        action: `Quiz completed via ${normalizeChannel(data.source)} (${percentage.toFixed(0)}%)`,
         timestamp: toDate(data.date),
         user: label,
       }
@@ -238,7 +284,7 @@ export async function getAdminAnalyticsSnapshot(): Promise<AdminAnalyticsSnapsho
       .map(([category, misses]) => ({ category, misses }))
 
     const totalQuizAttempts = attemptsSnap.size
-    const averageScore = totalQuizAttempts > 0 ? Number((totalScore / totalQuizAttempts).toFixed(1)) : 0
+    const averageScore = totalQuizAttempts > 0 ? Number((totalPercentage / totalQuizAttempts).toFixed(1)) : 0
 
     return {
       totalQuestions: questionsCountSnap.data().count,
@@ -250,6 +296,7 @@ export async function getAdminAnalyticsSnapshot(): Promise<AdminAnalyticsSnapsho
       sourceDistribution,
       landingSourceDistribution,
       scoreBandDistribution,
+      difficultyLevelDistribution,
       dailyAttempts,
       weakCategoryCounts,
     }
@@ -270,6 +317,13 @@ export async function getAdminAnalyticsSnapshot(): Promise<AdminAnalyticsSnapsho
         '40-59': 0,
         '60-79': 0,
         '80-100': 0,
+      },
+      difficultyLevelDistribution: {
+        '1': 0,
+        '2': 0,
+        '3': 0,
+        '4': 0,
+        '5': 0,
       },
       dailyAttempts: [],
       weakCategoryCounts: [],

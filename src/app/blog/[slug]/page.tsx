@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPublishedBlogPostBySlug, slugifyBlogValue } from '@/lib/blog'
 import { absoluteUrl, buildMetadata } from '@/lib/seo'
+import BlogContent from '@/components/blog/BlogContent'
 
 export const revalidate = 300
 
@@ -10,50 +11,6 @@ type BlogArticlePageProps = {
   params: Promise<{
     slug: string
   }>
-}
-
-function renderContentBlocks(content: string) {
-  const blocks = content
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean)
-
-  return blocks.map((block, index) => {
-    const lines = block.split('\n').map((line) => line.trim()).filter(Boolean)
-    const firstLine = lines[0] ?? ''
-
-    if (firstLine.startsWith('### ')) {
-      return (
-        <h3 key={index} className="text-xl font-semibold text-[#142842]">
-          {firstLine.replace(/^###\s+/, '')}
-        </h3>
-      )
-    }
-
-    if (firstLine.startsWith('## ')) {
-      return (
-        <h2 key={index} className="text-2xl font-semibold text-[#142842]">
-          {firstLine.replace(/^##\s+/, '')}
-        </h2>
-      )
-    }
-
-    if (lines.every((line) => line.startsWith('- '))) {
-      return (
-        <ul key={index} className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-[#1e3757] md:text-base">
-          {lines.map((line) => (
-            <li key={line}>{line.replace(/^- /, '')}</li>
-          ))}
-        </ul>
-      )
-    }
-
-    return (
-      <p key={index} className="text-sm leading-relaxed text-[#4f6483] md:text-base">
-        {lines.join(' ')}
-      </p>
-    )
-  })
 }
 
 export async function generateMetadata({ params }: BlogArticlePageProps): Promise<Metadata> {
@@ -174,7 +131,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
           </header>
 
           <section className="rounded-2xl border border-[#d9e3ef] bg-white p-6 shadow-sm md:p-8">
-            <div className="space-y-5">{renderContentBlocks(post.content)}</div>
+            <BlogContent content={post.content} />
           </section>
 
           <section className="rounded-2xl border border-[#d9e3ef] bg-white p-6 shadow-sm md:p-8">

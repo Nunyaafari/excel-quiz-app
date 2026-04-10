@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { buildMetadata, longTailSeoKeywords } from '@/lib/seo'
-import { freeExcelResources } from '@/lib/site-resources'
+import { buildSiteResourceDownloadPath, freeExcelResources } from '@/lib/site-resources'
 
 export const metadata: Metadata = buildMetadata({
   title: 'Free Excel Resources Ghana',
@@ -42,7 +42,10 @@ export default function ResourcesPage() {
                 </p>
                 <h2 className="mt-4 text-2xl font-semibold text-[#142842]">{resource.title}</h2>
                 <p className="mt-3 text-sm leading-relaxed text-[#5a6f8a]">{resource.description}</p>
-                <a href={resource.href} download className="btn-primary mt-6 inline-flex w-full justify-center sm:w-auto">
+                <a
+                  href={buildSiteResourceDownloadPath(resource.id)}
+                  className="btn-primary mt-6 inline-flex w-full justify-center sm:w-auto"
+                >
                   Download Resource
                 </a>
               </article>

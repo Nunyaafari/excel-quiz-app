@@ -1,8 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { FirebaseError } from 'firebase/app'
 import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import BlogMediaLibrary from '@/components/admin/BlogMediaLibrary'
+import BlogContent from '@/components/blog/BlogContent'
 import { blogTopicSuggestions, longTailSeoKeywords, primarySeoKeywords } from '@/lib/seo'
 import type { BlogPost } from '@/types'
 
@@ -52,6 +55,24 @@ function slugify(value: string) {
 function buildExcerpt(value: string) {
   const normalized = value.replace(/\s+/g, ' ').trim()
   return normalized.length > 180 ? `${normalized.slice(0, 177).trimEnd()}...` : normalized
+}
+
+function toFriendlyBlogError(error: unknown) {
+  if (error instanceof FirebaseError) {
+    if (error.code === 'permission-denied') {
+      return 'Permission denied. Ensure this account is listed in Firestore /admins with active=true (then redeploy rules).'
+    }
+    if (error.code === 'unauthenticated') {
+      return 'You are signed out. Sign in with Google to save blog posts.'
+    }
+    return error.message || 'Could not complete blog action.'
+  }
+
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return 'Could not complete blog action.'
 }
 
 function toDate(value: unknown): Date {
@@ -108,12 +129,14 @@ export default function BlogManager({ adminName }: BlogManagerProps) {
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
+  const [contentMode, setContentMode] = useState<'write' | 'preview'>('write')
   const [formState, setFormState] = useState<BlogFormState>({
     ...defaultFormState,
     authorName: adminName || defaultFormState.authorName,
   })
   const [message, setMessage] = useState<string | null>(null)
   const [messageTone, setMessageTone] = useState<'success' | 'error' | null>(null)
+  const contentTextareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -126,7 +149,7 @@ export default function BlogManager({ adminName }: BlogManagerProps) {
       } catch (error) {
         console.error('Failed to load blog posts:', error)
         setMessageTone('error')
-        setMessage('Could not load blog posts.')
+        setMessage(toFriendlyBlogError(error))
       } finally {
         setLoading(false)
       }
@@ -175,6 +198,83 @@ export default function BlogManager({ adminName }: BlogManagerProps) {
         : [post, ...current]
 
       return next.sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime())
+    })
+  }
+
+  const applyContentTransform = (
+    transform: (value: string, selectionStart: number, selectionEnd: number) => {
+      nextValue: string
+      nextSelectionStart: number
+      nextSelectionEnd: number
+    }
+  ) => {
+    const textarea = contentTextareaRef.current
+    const selectionStart = textarea?.selectionStart ?? formState.content.length
+    const selectionEnd = textarea?.selectionEnd ?? formState.content.length
+    const result = transform(formState.content, selectionStart, selectionEnd)
+
+    setFormState((current) => ({ ...current, content: result.nextValue }))
+
+    requestAnimationFrame(() => {
+      const nextTextarea = contentTextareaRef.current
+      if (!nextTextarea) {
+        return
+      }
+      nextTextarea.focus()
+      nextTextarea.setSelectionRange(result.nextSelectionStart, result.nextSelectionEnd)
+    })
+  }
+
+  const wrapSelection = (prefix: string, suffix: string, placeholder: string) => {
+    applyContentTransform((value, start, end) => {
+      const hasSelection = end > start
+      const selectedText = value.slice(start, end)
+      const innerText = hasSelection ? selectedText : placeholder
+      const nextValue = `${value.slice(0, start)}${prefix}${innerText}${suffix}${value.slice(end)}`
+      const innerStart = start + prefix.length
+      const innerEnd = innerStart + innerText.length
+      return { nextValue, nextSelectionStart: innerStart, nextSelectionEnd: innerEnd }
+    })
+  }
+
+  const prefixSelectedLines = (prefix: string) => {
+    applyContentTransform((value, start, end) => {
+      const beforeSelection = value.slice(0, start)
+      const selection = value.slice(start, end)
+      const afterSelection = value.slice(end)
+
+      const prefixStart = beforeSelection.lastIndexOf('\n') + 1
+      const prefixEndOffset = selection.lastIndexOf('\n')
+      const selectionEnd =
+        prefixEndOffset >= 0 ? end - (selection.length - prefixEndOffset) : end
+
+      const lines = value.slice(prefixStart, selectionEnd).split('\n')
+      const nextLines = lines.map((line) => (line.trim().length === 0 ? line : `${prefix}${line}`))
+      const nextBlock = nextLines.join('\n')
+      const nextValue = `${value.slice(0, prefixStart)}${nextBlock}${value.slice(selectionEnd)}`
+
+      const nextSelectionStart = start + prefix.length
+      const nextSelectionEnd = end + prefix.length * Math.max(1, lines.length)
+
+      return { nextValue, nextSelectionStart, nextSelectionEnd }
+    })
+  }
+
+  const insertSnippet = (snippet: string, selectFromEnd = 0) => {
+    applyContentTransform((value, start, end) => {
+      const nextValue = `${value.slice(0, start)}${snippet}${value.slice(end)}`
+      const cursor = start + snippet.length - selectFromEnd
+      return { nextValue, nextSelectionStart: cursor, nextSelectionEnd: cursor }
+    })
+  }
+
+  const insertImageMarkdown = (url: string) => {
+    applyContentTransform((value, start, end) => {
+      const snippet = `\n\n![Image](${url})\n\n`
+      const nextValue = `${value.slice(0, start)}${snippet}${value.slice(end)}`
+      const altStart = start + 3
+      const altEnd = altStart + 'Image'.length
+      return { nextValue, nextSelectionStart: altStart, nextSelectionEnd: altEnd }
     })
   }
 
@@ -281,7 +381,7 @@ export default function BlogManager({ adminName }: BlogManagerProps) {
     } catch (error) {
       console.error('Failed to save blog post:', error)
       setMessageTone('error')
-      setMessage('Could not save blog post.')
+      setMessage(toFriendlyBlogError(error))
     } finally {
       setSaving(false)
     }
@@ -308,7 +408,7 @@ export default function BlogManager({ adminName }: BlogManagerProps) {
     } catch (error) {
       console.error('Failed to delete blog post:', error)
       setMessageTone('error')
-      setMessage('Could not delete blog post.')
+      setMessage(toFriendlyBlogError(error))
     } finally {
       setDeletingId(null)
     }
@@ -402,6 +502,11 @@ export default function BlogManager({ adminName }: BlogManagerProps) {
                 className="mt-2 w-full rounded-lg border border-[#dbe5f1] px-4 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-excel-green"
                 placeholder="https://..."
               />
+              {formState.coverImageUrl.trim() ? (
+                <div className="mt-3 overflow-hidden rounded-xl border border-[#dbe5f1] bg-[#f8fbff]">
+                  <img src={formState.coverImageUrl.trim()} alt="Cover preview" className="h-40 w-full object-cover" />
+                </div>
+              ) : null}
             </div>
 
             <div>
@@ -452,14 +557,88 @@ export default function BlogManager({ adminName }: BlogManagerProps) {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-sm font-semibold text-[#1e3757]">Content</label>
-              <textarea
-                value={formState.content}
-                onChange={(event) => setFormState((current) => ({ ...current, content: event.target.value }))}
-                rows={16}
-                className="mt-2 w-full rounded-lg border border-[#dbe5f1] px-4 py-3 text-sm leading-relaxed focus:border-transparent focus:ring-2 focus:ring-excel-green"
-                placeholder={'Use plain text with blank lines between paragraphs.\nStart lines with ## or ### for headings.\nStart lines with - for bullet lists.'}
-              />
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <label className="text-sm font-semibold text-[#1e3757]">Content</label>
+                  <p className="mt-1 text-xs text-[#5a6f8a]">
+                    Supports: ## headings, - lists, &gt; quotes, **bold**, *italic*, [links](url), ![alt](url)
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className={contentMode === 'write' ? 'btn-primary w-full sm:w-auto' : 'btn-secondary w-full sm:w-auto'}
+                    onClick={() => setContentMode('write')}
+                  >
+                    Write
+                  </button>
+                  <button
+                    type="button"
+                    className={contentMode === 'preview' ? 'btn-primary w-full sm:w-auto' : 'btn-secondary w-full sm:w-auto'}
+                    onClick={() => setContentMode('preview')}
+                  >
+                    Preview
+                  </button>
+                </div>
+              </div>
+
+              {contentMode === 'write' ? (
+                <>
+                  <div className="mt-3 flex flex-wrap gap-2 rounded-xl border border-[#dbe5f1] bg-[#f8fbff] p-3">
+                    <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => prefixSelectedLines('## ')}>
+                      H2
+                    </button>
+                    <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => prefixSelectedLines('### ')}>
+                      H3
+                    </button>
+                    <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => wrapSelection('**', '**', 'bold text')}>
+                      Bold
+                    </button>
+                    <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => wrapSelection('*', '*', 'italic text')}>
+                      Italic
+                    </button>
+                    <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => prefixSelectedLines('- ')}>
+                      Bullets
+                    </button>
+                    <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => prefixSelectedLines('> ')}>
+                      Quote
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary w-full sm:w-auto"
+                      onClick={() => insertSnippet('[link text](https://)', 'https://'.length + 1)}
+                    >
+                      Link
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary w-full sm:w-auto"
+                      onClick={() => insertSnippet('\n\n![Image](https://)\n\n', 'https://'.length + 3)}
+                    >
+                      Image
+                    </button>
+                  </div>
+
+                  <textarea
+                    ref={contentTextareaRef}
+                    value={formState.content}
+                    onChange={(event) => setFormState((current) => ({ ...current, content: event.target.value }))}
+                    rows={16}
+                    className="mt-3 w-full rounded-lg border border-[#dbe5f1] px-4 py-3 text-sm leading-relaxed focus:border-transparent focus:ring-2 focus:ring-excel-green"
+                    placeholder={
+                      'Write like Substack: short paragraphs with blank lines.\n\n## Heading\n\n- Bullet one\n- Bullet two\n\n> A short callout\n\n**Bold**, *italic*, [links](https://...), and images: ![alt](url)'
+                    }
+                  />
+                </>
+              ) : (
+                <div className="mt-3 rounded-xl border border-[#dbe5f1] bg-white p-5">
+                  {formState.content.trim() ? (
+                    <BlogContent content={formState.content} />
+                  ) : (
+                    <p className="text-sm text-[#5a6f8a]">Nothing to preview yet.</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -536,6 +715,14 @@ export default function BlogManager({ adminName }: BlogManagerProps) {
               ))}
             </div>
           </section>
+
+          <BlogMediaLibrary
+            onInsertImage={(url) => {
+              insertImageMarkdown(url)
+              setContentMode('write')
+            }}
+            onSetCover={(url) => setFormState((current) => ({ ...current, coverImageUrl: url }))}
+          />
 
           <section className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
             <h3 className="text-lg font-semibold text-[#142842]">Suggested Blog Topics</h3>

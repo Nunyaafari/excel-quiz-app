@@ -25,10 +25,15 @@ ChartJS.register(CategoryScale, LinearScale, ArcElement, BarElement, Tooltip, Le
 
 type AnalyticsDetails = Pick<
   AdminAnalyticsSnapshot,
-  'sourceDistribution' | 'landingSourceDistribution' | 'scoreBandDistribution' | 'dailyAttempts' | 'weakCategoryCounts'
+  'sourceDistribution'
+  | 'landingSourceDistribution'
+  | 'scoreBandDistribution'
+  | 'difficultyLevelDistribution'
+  | 'dailyAttempts'
+  | 'weakCategoryCounts'
 >
 
-type AdminTab = 'overview' | 'content' | 'analytics' | 'batches' | 'outreach'
+type AdminTab = 'overview' | 'content' | 'questionBank' | 'analytics' | 'batches' | 'outreach'
 
 const CHART_COLORS = ['#0f2744', '#144d6a', '#1f6f6d', '#3f86a8', '#82b8d7', '#94d2bd']
 
@@ -289,6 +294,7 @@ export default function AdminPage() {
             sourceDistribution: analyticsSnapshot.sourceDistribution,
             landingSourceDistribution: analyticsSnapshot.landingSourceDistribution,
             scoreBandDistribution: analyticsSnapshot.scoreBandDistribution,
+            difficultyLevelDistribution: analyticsSnapshot.difficultyLevelDistribution,
             dailyAttempts: analyticsSnapshot.dailyAttempts,
             weakCategoryCounts: analyticsSnapshot.weakCategoryCounts,
           })
@@ -491,9 +497,14 @@ export default function AdminPage() {
     () => Object.entries(analyticsDetails?.scoreBandDistribution ?? {}),
     [analyticsDetails]
   )
+  const difficultyLevelEntries = useMemo(() => {
+    const entries = Object.entries(analyticsDetails?.difficultyLevelDistribution ?? {})
+    return entries.sort(([left], [right]) => Number(left) - Number(right))
+  }, [analyticsDetails])
   const adminTabs: Array<{ id: AdminTab; label: string; description: string }> = [
     { id: 'overview', label: 'Overview', description: 'Recent activity and admin shortcuts' },
-    { id: 'content', label: 'Content', description: 'Blog, questions, and CSV import' },
+    { id: 'content', label: 'Blog', description: 'Create and publish SEO blog posts' },
+    { id: 'questionBank', label: 'Question Bank', description: 'Manage questions and bulk CSV imports' },
     { id: 'analytics', label: 'Analytics', description: 'Performance, sources, and trends' },
     { id: 'batches', label: 'Batches', description: 'Create invites and review cohort results' },
     { id: 'outreach', label: 'Outreach', description: 'Leads and training requests' },
@@ -1011,124 +1022,126 @@ export default function AdminPage() {
               <section>
                 <BlogManager adminName={user?.displayName || user?.email || 'Excel Mastery Team'} />
               </section>
+            </>
+          )}
 
-              <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-                  <h2 className="text-2xl font-semibold text-[#142842]">Question Management</h2>
-                  <p className="mt-1 mb-4 text-sm text-[#5a6f8a]">Create, edit, and maintain quiz question quality.</p>
-                  <QuestionManager
-                    onQuestionUpdate={() => {
-                      setStats((previous) =>
-                        previous
-                          ? {
-                              ...previous,
-                              totalQuestions: previous.totalQuestions + 1,
-                              recentActivity: [
-                                { action: 'Question updated', timestamp: new Date(), user: user.email || 'admin' },
-                                ...previous.recentActivity.slice(0, 7),
-                              ],
-                            }
-                          : previous
-                      )
-                    }}
-                  />
-                </div>
+          {activeTab === 'questionBank' && (
+            <div className="space-y-6">
+              <section className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                <h2 className="text-2xl font-semibold text-[#142842]">CSV Import</h2>
+                <p className="mt-1 mb-4 text-sm text-[#5a6f8a]">Upload validated CSV files to add question batches.</p>
 
-                <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
-                  <h2 className="text-2xl font-semibold text-[#142842]">CSV Import</h2>
-                  <p className="mt-1 mb-4 text-sm text-[#5a6f8a]">Upload validated CSV files to add question batches.</p>
-
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      <button onClick={downloadSampleCSV} className="btn-secondary w-full sm:w-auto">
-                        Download Template
-                      </button>
-                    </div>
-
-                    <div className="rounded-lg border border-[#dbe5f1] bg-[#f8fbff] p-4 text-sm text-[#45637f]">
-                      <p className="mb-2 font-semibold">CSV fields required</p>
-                      <p><strong>text</strong>, <strong>category</strong>, <strong>option1-4</strong>, <strong>correctAnswer</strong>, <strong>difficulty</strong>, <strong>imageUrl</strong></p>
-                    </div>
-
-                    <div className="rounded-lg border-2 border-dashed border-[#c6d7ee] bg-white p-6 text-center">
-                      <input
-                        type="file"
-                        accept=".csv"
-                        onChange={handleCSVUpload}
-                        className="hidden"
-                        id="csv-upload"
-                        disabled={importing}
-                      />
-                      <label htmlFor="csv-upload" className={`cursor-pointer ${importing ? 'opacity-50' : ''}`}>
-                        <p className="text-sm font-semibold text-[#1d3d61]">{csvFile ? csvFile.name : 'Select CSV file to upload'}</p>
-                        <p className="mt-1 text-xs text-[#5a6f8a]">Maximum file size: 5MB</p>
-                      </label>
-                    </div>
-
-                    {importing && (
-                      <div className="flex items-center justify-center py-3">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-excel-green"></div>
-                        <span className="ml-2 text-sm text-[#5a6f8a]">
-                          {importResult ? 'Importing valid questions to database...' : 'Validating CSV file...'}
-                        </span>
-                      </div>
-                    )}
-
-                    {importResult && (
-                      <div className={`rounded-lg border p-4 ${previewClassName}`}>
-                        <h4 className="font-semibold mb-2">
-                          {previewHasValidRows ? (previewHasInvalidRows ? 'Import Preview (Partial)' : 'Import Preview') : 'Import Errors'}
-                        </h4>
-                        <p className="text-sm mb-2">
-                          Valid: {importResult.importedCount} | Invalid: {importResult.failedCount}
-                        </p>
-
-                        {importResult.warnings?.length ? (
-                          <ul className="text-sm space-y-1 mb-2">
-                            {importResult.warnings.map((warning, index) => (
-                              <li key={index}>• {warning}</li>
-                            ))}
-                          </ul>
-                        ) : null}
-
-                        {importResult.errors.length > 0 && (
-                          <ul className="text-sm space-y-1">
-                            {importResult.errors.map((error, index) => (
-                              <li key={index}>• {error}</li>
-                            ))}
-                          </ul>
-                        )}
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {importResult.questions.length > 0 && (
-                            <button onClick={handleImportQuestions} className="btn-primary w-full sm:w-auto" disabled={importing}>
-                              Import {importResult.questions.length} Valid Question(s)
-                            </button>
-                          )}
-                          {importResult.errors.length > 0 && (
-                            <button
-                              onClick={() => downloadImportErrorsCSV(importResult.errors)}
-                              className="btn-secondary w-full sm:w-auto"
-                              disabled={importing}
-                            >
-                              Download Failed Rows CSV
-                            </button>
-                          )}
-                          <button onClick={handleClearUpload} className="btn-secondary w-full sm:w-auto" disabled={importing}>
-                            Clear
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={downloadSampleCSV} className="btn-secondary w-full sm:w-auto">
+                      Download Template
+                    </button>
                   </div>
+
+                  <div className="rounded-lg border border-[#dbe5f1] bg-[#f8fbff] p-4 text-sm text-[#45637f]">
+                    <p className="mb-2 font-semibold">CSV fields required</p>
+                    <p><strong>text</strong>, <strong>category</strong>, <strong>option1-4</strong>, <strong>correctAnswer</strong>, <strong>difficulty</strong>, <strong>imageUrl</strong></p>
+                  </div>
+
+                  <div className="rounded-lg border-2 border-dashed border-[#c6d7ee] bg-white p-6 text-center">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleCSVUpload}
+                      className="hidden"
+                      id="csv-upload"
+                      disabled={importing}
+                    />
+                    <label htmlFor="csv-upload" className={`cursor-pointer ${importing ? 'opacity-50' : ''}`}>
+                      <p className="text-sm font-semibold text-[#1d3d61]">{csvFile ? csvFile.name : 'Select CSV file to upload'}</p>
+                      <p className="mt-1 text-xs text-[#5a6f8a]">Maximum file size: 5MB</p>
+                    </label>
+                  </div>
+
+                  {importing && (
+                    <div className="flex items-center justify-center py-3">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-excel-green"></div>
+                      <span className="ml-2 text-sm text-[#5a6f8a]">
+                        {importResult ? 'Importing valid questions to database...' : 'Validating CSV file...'}
+                      </span>
+                    </div>
+                  )}
+
+                  {importResult && (
+                    <div className={`rounded-lg border p-4 ${previewClassName}`}>
+                      <h4 className="font-semibold mb-2">
+                        {previewHasValidRows ? (previewHasInvalidRows ? 'Import Preview (Partial)' : 'Import Preview') : 'Import Errors'}
+                      </h4>
+                      <p className="text-sm mb-2">
+                        Valid: {importResult.importedCount} | Invalid: {importResult.failedCount}
+                      </p>
+
+                      {importResult.warnings?.length ? (
+                        <ul className="text-sm space-y-1 mb-2">
+                          {importResult.warnings.map((warning, index) => (
+                            <li key={index}>• {warning}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+
+                      {importResult.errors.length > 0 && (
+                        <ul className="text-sm space-y-1">
+                          {importResult.errors.map((error, index) => (
+                            <li key={index}>• {error}</li>
+                          ))}
+                        </ul>
+                      )}
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {importResult.questions.length > 0 && (
+                          <button onClick={handleImportQuestions} className="btn-primary w-full sm:w-auto" disabled={importing}>
+                            Import {importResult.questions.length} Valid Question(s)
+                          </button>
+                        )}
+                        {importResult.errors.length > 0 && (
+                          <button
+                            onClick={() => downloadImportErrorsCSV(importResult.errors)}
+                            className="btn-secondary w-full sm:w-auto"
+                            disabled={importing}
+                          >
+                            Download Failed Rows CSV
+                          </button>
+                        )}
+                        <button onClick={handleClearUpload} className="btn-secondary w-full sm:w-auto" disabled={importing}>
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </section>
-            </>
+
+              <section className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                <h2 className="text-2xl font-semibold text-[#142842]">Question Management</h2>
+                <p className="mt-1 mb-4 text-sm text-[#5a6f8a]">Create, edit, and maintain quiz question quality.</p>
+                <QuestionManager
+                  onQuestionUpdate={() => {
+                    setStats((previous) =>
+                      previous
+                        ? {
+                            ...previous,
+                            totalQuestions: previous.totalQuestions + 1,
+                            recentActivity: [
+                              { action: 'Question updated', timestamp: new Date(), user: user.email || 'admin' },
+                              ...previous.recentActivity.slice(0, 7),
+                            ],
+                          }
+                        : previous
+                    )
+                  }}
+                />
+              </section>
+            </div>
           )}
 
           {activeTab === 'analytics' && (
             <>
-              <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <section className="grid grid-cols-1 xl:grid-cols-4 gap-6">
                 <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -1196,6 +1209,39 @@ export default function AdminPage() {
                     </div>
                   ) : (
                     <EmptyAnalyticsState message="No completed attempt source data yet." />
+                  )}
+                </div>
+
+                <div className="rounded-2xl border border-[#d9e3ef] bg-white p-5 shadow-sm md:p-6">
+                  <h2 className="text-2xl font-semibold text-[#142842]">Difficulty Mix</h2>
+                  <p className="mt-1 text-sm text-[#5a6f8a]">Difficulty levels selected in the quiz survey.</p>
+
+                  {difficultyLevelEntries.some(([, value]) => value > 0) ? (
+                    <div className="mt-4 h-72">
+                      <Doughnut
+                        data={{
+                          labels: difficultyLevelEntries.map(([level]) => `Level ${level}`),
+                          datasets: [
+                            {
+                              data: difficultyLevelEntries.map(([, value]) => value),
+                              backgroundColor: ['#0f2744', '#144d6a', '#1f6f6d', '#3f86a8', '#94d2bd'],
+                              borderWidth: 0,
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: {
+                              position: 'bottom',
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <EmptyAnalyticsState message="No difficulty-level selection data yet." />
                   )}
                 </div>
 

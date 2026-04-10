@@ -35,6 +35,7 @@ const CATEGORY_ALIASES: Record<string, Question['category']> = {
   charts: 'Charts',
   dataanalysis: 'DataAnalysis',
   formatting: 'Formatting',
+  advancedformulas: 'Advanced Formulas',
   advancedcharts: 'Advanced Charts',
   advancedfiltering: 'Advanced Filtering',
   advancedlookup: 'Advanced Lookup',
@@ -46,12 +47,15 @@ const CATEGORY_ALIASES: Record<string, Question['category']> = {
   autofillandflashfill: 'Autofill and Flash Fill',
   chartelements: 'Chart Elements',
   conditionalfuctions: 'Conditional Functions',
+  dashboards: 'Dashboards',
   dataanalysistools: 'Data Analysis Tools',
   dataconsolidation: 'Data Consolidation',
+  datatools: 'Data Tools',
   dataentry: 'Data Entry',
   dataselectionstrategies: 'Data Selection Strategies',
   datavalidation: 'Data Validation',
   datefunctions: 'Date Functions',
+  dynamicarrays: 'Dynamic Arrays',
   dynamicarrayfunctions: 'Dynamic Array Functions',
   excelbasics: 'Excel Basics',
   excelinterface: 'Excel Interface',
@@ -63,12 +67,14 @@ const CATEGORY_ALIASES: Record<string, Question['category']> = {
   informationfunctions: 'Information Functions',
   logicalfunctions: 'Logical Functions',
   lookupfunctions: 'Lookup Functions',
+  macros: 'Macros',
   mathfunctions: 'Math Functions',
   modernfunctions: 'Modern Functions',
   namedranges: 'Named Ranges',
   pastespecial: 'Paste Special',
   pivotcharts: 'PivotCharts',
   pivottables: 'PivotTables',
+  powerquery: 'Power Query',
   powerpivot: 'Power Pivot',
   printing: 'Printing',
   statisticalfunctions: 'Statistical Functions',
@@ -260,7 +266,7 @@ export function generateSampleCSVWithHeaders(): string {
 # 
 # COLUMN REQUIREMENTS:
 # - text: The question text (required)
-# - category: Question category (required) - Options: Formulas, Shortcuts, Charts, DataAnalysis, Formatting, Advanced Charts, Advanced Filtering, Advanced Lookup, Advanced PivotTables, Advanced Sorting, Advanced Visualization, Arithmetic Functions, Array Formulas, Autofill and Flash Fill, Chart Elements, Conditional Functions, Data Analysis Tools, Data Consolidation, Data Entry, Data Selection Strategies, Data Validation, Date Functions, Dynamic Array Functions, Excel Basics, Excel Interface, Excel Tables, Financial Functions, Find & Replace, Freeze Panes, Functions, Information Functions, Logical Functions, Lookup Functions, Math Functions, Modern Functions, Named Ranges, Paste Special, PivotCharts, PivotTables, Power Pivot, Printing, Statistical Functions, Subtotals and Grouping, Text Functions, View Tools, Power Functions, Conditional Formatting, Statistical Analysis, Macros and VBA, Collaboration, Workbook Security
+# - category: Question category (required) - Options: Formulas, Shortcuts, Charts, DataAnalysis, Formatting, Advanced Formulas, Advanced Charts, Advanced Filtering, Advanced Lookup, Advanced PivotTables, Advanced Sorting, Advanced Visualization, Arithmetic Functions, Array Formulas, Autofill and Flash Fill, Chart Elements, Conditional Functions, Dashboards, Data Analysis Tools, Data Consolidation, Data Tools, Data Entry, Data Selection Strategies, Data Validation, Date Functions, Dynamic Arrays, Dynamic Array Functions, Excel Basics, Excel Interface, Excel Tables, Financial Functions, Find & Replace, Freeze Panes, Functions, Information Functions, Logical Functions, Lookup Functions, Macros, Math Functions, Modern Functions, Named Ranges, Paste Special, PivotCharts, PivotTables, Power Query, Power Pivot, Printing, Statistical Functions, Subtotals and Grouping, Text Functions, View Tools, Power Functions, Conditional Formatting, Statistical Analysis, Macros and VBA, Collaboration, Workbook Security
 # - option1-4: Answer options (required) - At least 2 options needed
 # - correctAnswer: Index of correct answer (required) - 0=option1, 1=option2, 2=option3, 3=option4
 # - difficulty: Difficulty level (optional) - 1=easy, 5=hard

@@ -69,10 +69,17 @@ function parseBlogPost(raw: unknown, id: string): BlogPost | null {
 
 export async function getPublishedBlogPosts(): Promise<BlogPost[]> {
   try {
-    const snapshot = await adminDb.collection('blogPosts').orderBy('publishedAt', 'desc').limit(100).get()
+    // Avoid relying on Firestore ordering at query time; mixed/null `publishedAt` values
+    // can make ordering unpredictable depending on historical data. We sort in memory.
+    const snapshot = await adminDb.collection('blogPosts').limit(200).get()
     return snapshot.docs
       .map((docSnapshot) => parseBlogPost(docSnapshot.data(), docSnapshot.id))
       .filter((post): post is BlogPost => post !== null && post.status === 'published')
+      .sort((left, right) => {
+        const leftTime = (left.publishedAt ?? left.updatedAt).getTime()
+        const rightTime = (right.publishedAt ?? right.updatedAt).getTime()
+        return rightTime - leftTime
+      })
   } catch (error) {
     console.error('Failed to load published blog posts:', error)
     return []

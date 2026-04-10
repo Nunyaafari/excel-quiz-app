@@ -2,7 +2,6 @@
 
 import StarRating from '@/components/StarRating'
 import { useAuth } from '@/lib/auth'
-import { freeExcelResourceHub } from '@/lib/site-resources'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FirebaseError } from 'firebase/app'
@@ -276,15 +275,6 @@ export default function Home() {
                 >
                   Explore Excel Blog
                 </button>
-              </div>
-
-              <div className="mt-3">
-                <a
-                  href={freeExcelResourceHub.href}
-                  className="inline-flex w-full items-center justify-center rounded-xl border border-white/30 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15 sm:w-auto"
-                >
-                  {freeExcelResourceHub.label}
-                </a>
               </div>
 
               <div className="mt-8 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">

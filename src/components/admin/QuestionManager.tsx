@@ -1,95 +1,258 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Question } from '@/types'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { FirebaseError } from 'firebase/app'
+import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp, updateDoc, where } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import { Question, QUESTION_CATEGORIES } from '@/types'
 
 interface QuestionManagerProps {
   onQuestionUpdate?: () => void
 }
 
+function toFriendlyQuestionError(error: unknown) {
+  if (error instanceof FirebaseError) {
+    if (error.code === 'permission-denied') {
+      return 'Permission denied. Ensure this account is an active admin.'
+    }
+    if (error.code === 'unauthenticated') {
+      return 'You are signed out. Sign in with Google to manage questions.'
+    }
+    return error.message || 'Question action failed.'
+  }
+
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return 'Question action failed.'
+}
+
+function parseQuestionRecord(raw: unknown, id: string): Question | null {
+  if (!raw || typeof raw !== 'object') {
+    return null
+  }
+
+  const data = raw as Partial<Question> & Record<string, unknown>
+  const text = typeof data.text === 'string' ? data.text.trim() : ''
+  if (!text) {
+    return null
+  }
+
+  const category = typeof data.category === 'string' && QUESTION_CATEGORIES.includes(data.category as Question['category'])
+    ? (data.category as Question['category'])
+    : 'Formulas'
+
+  const options = Array.isArray(data.options)
+    ? data.options.map((option) => String(option ?? '').trim()).filter(Boolean)
+    : []
+  if (options.length < 2) {
+    return null
+  }
+
+  const difficultyValue = Number.parseInt(String(data.difficulty ?? 3), 10)
+  const difficulty = (difficultyValue >= 1 && difficultyValue <= 5 ? difficultyValue : 3) as 1 | 2 | 3 | 4 | 5
+
+  const correctAnswerValue = Number.parseInt(String(data.correctAnswer ?? 0), 10)
+  const correctAnswer =
+    Number.isNaN(correctAnswerValue) || correctAnswerValue < 0 || correctAnswerValue >= options.length ? 0 : correctAnswerValue
+
+  return {
+    id,
+    text,
+    category,
+    options,
+    correctAnswer,
+    difficulty,
+    imageUrl: typeof data.imageUrl === 'string' && data.imageUrl.trim() ? data.imageUrl.trim() : undefined,
+  }
+}
+
 export default function QuestionManager({ onQuestionUpdate }: QuestionManagerProps) {
   const [questions, setQuestions] = useState<Question[]>([])
+  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 1 | 2 | 3 | 4 | 5>('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+  const [messageTone, setMessageTone] = useState<'success' | 'error' | null>(null)
 
-  // Sample questions for MVP
-  const sampleQuestions: Question[] = [
-    {
-      id: '1',
-      text: 'What does the VLOOKUP function do?',
-      category: 'Formulas',
-      options: [
-        'Searches for a value in the first column of a table and returns a value in the same row from a specified column',
-        'Creates a pivot table from the selected data',
-        'Validates data entry based on specified criteria',
-        'Merges multiple cells into one'
-      ],
-      correctAnswer: 0,
-      difficulty: 2,
-    },
-    {
-      id: '2',
-      text: 'Which keyboard shortcut is used to create an absolute cell reference?',
-      category: 'Shortcuts',
-      options: ['F4', 'F2', 'Ctrl + A', 'Alt + Enter'],
-      correctAnswer: 0,
-      difficulty: 1,
-    },
-    {
-      id: '3',
-      text: 'What is the purpose of the SUMIF function?',
-      category: 'Formulas',
-      options: [
-        'Sums values that meet a specific condition',
-        'Counts the number of cells that contain numbers',
-        'Returns the average of a range of cells',
-        'Finds the maximum value in a range'
-      ],
-      correctAnswer: 0,
-      difficulty: 2,
-    },
-  ]
+  const loadQuestions = useCallback(async (filter: typeof difficultyFilter) => {
+    setLoading(true)
+    setMessage(null)
+    setMessageTone(null)
+
+    try {
+      const base = collection(db, 'questions')
+      const firestoreQuery =
+        filter === 'all'
+          ? query(base, orderBy('category', 'asc'))
+          : query(base, where('difficulty', '==', filter))
+
+      const snapshot = await getDocs(firestoreQuery)
+      const parsed = snapshot.docs
+        .map((docSnapshot) => parseQuestionRecord(docSnapshot.data(), docSnapshot.id))
+        .filter((question): question is Question => question !== null)
+        .sort((left, right) => {
+          const categoryCompare = left.category.localeCompare(right.category)
+          if (categoryCompare !== 0) {
+            return categoryCompare
+          }
+          if (left.difficulty !== right.difficulty) {
+            return left.difficulty - right.difficulty
+          }
+          return left.text.localeCompare(right.text)
+        })
+
+      setQuestions(parsed)
+    } catch (error) {
+      console.error('Failed to load questions:', error)
+      setMessageTone('error')
+      setMessage(toFriendlyQuestionError(error))
+      setQuestions([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    // Mock loading questions
-    setTimeout(() => {
-      setQuestions(sampleQuestions)
-      setLoading(false)
-    }, 1000)
-  }, [])
+    void loadQuestions(difficultyFilter)
+  }, [difficultyFilter, loadQuestions])
+
+  const visibleQuestions = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+    const matches = (question: Question) => {
+      if (!normalizedQuery) {
+        return true
+      }
+
+      if (question.text.toLowerCase().includes(normalizedQuery)) {
+        return true
+      }
+      if (question.category.toLowerCase().includes(normalizedQuery)) {
+        return true
+      }
+      if (question.options.some((option) => option.toLowerCase().includes(normalizedQuery))) {
+        return true
+      }
+
+      return false
+    }
+
+    const filteredByDifficulty =
+      difficultyFilter === 'all' ? questions : questions.filter((question) => question.difficulty === difficultyFilter)
+
+    return filteredByDifficulty.filter(matches)
+  }, [difficultyFilter, questions, searchQuery])
+
+  const emptyStateMessage = useMemo(() => {
+    const normalizedQuery = searchQuery.trim()
+    if (questions.length === 0) {
+      return difficultyFilter === 'all'
+        ? 'No questions yet. Use "Add New Question" or the CSV Import panel to add questions.'
+        : `No questions found for difficulty level ${difficultyFilter}.`
+    }
+
+    if (normalizedQuery) {
+      return 'No questions match your search.'
+    }
+
+    return 'No questions found.'
+  }, [difficultyFilter, questions.length, searchQuery])
 
   const handleEdit = (question: Question) => {
     setEditingQuestion({ ...question })
     setShowForm(true)
   }
 
-  const handleDelete = (questionId: string) => {
-    if (confirm('Are you sure you want to delete this question?')) {
-      setQuestions(questions.filter(q => q.id !== questionId))
+  const handleDelete = async (questionId: string) => {
+    const confirmed = window.confirm('Are you sure you want to delete this question?')
+    if (!confirmed) {
+      return
+    }
+
+    setDeletingId(questionId)
+    setMessage(null)
+    setMessageTone(null)
+
+    try {
+      await deleteDoc(doc(db, 'questions', questionId))
+      setQuestions((current) => current.filter((question) => question.id !== questionId))
+      setMessageTone('success')
+      setMessage('Question deleted.')
       onQuestionUpdate?.()
+    } catch (error) {
+      console.error('Failed to delete question:', error)
+      setMessageTone('error')
+      setMessage(toFriendlyQuestionError(error))
+    } finally {
+      setDeletingId(null)
     }
   }
 
-  const handleSave = () => {
-    if (editingQuestion) {
+  const handleSave = async () => {
+    if (!editingQuestion) {
+      return
+    }
+
+    const text = editingQuestion.text.trim()
+    const options = editingQuestion.options.map((option) => option.trim()).filter(Boolean)
+    if (!text || options.length < 2) {
+      setMessageTone('error')
+      setMessage('Question text and at least two options are required.')
+      return
+    }
+
+    const correctAnswer =
+      editingQuestion.correctAnswer >= 0 && editingQuestion.correctAnswer < options.length
+        ? editingQuestion.correctAnswer
+        : 0
+
+    setSaving(true)
+    setMessage(null)
+    setMessageTone(null)
+
+    const payload = {
+      text,
+      category: editingQuestion.category,
+      options,
+      correctAnswer,
+      difficulty: editingQuestion.difficulty,
+      updatedAt: serverTimestamp(),
+    }
+
+    try {
       if (editingQuestion.id.startsWith('new-')) {
-        // Adding new question
-        const newQuestion = {
-          ...editingQuestion,
-          id: `question-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        }
-        setQuestions([...questions, newQuestion])
+        const docRef = await addDoc(collection(db, 'questions'), {
+          ...payload,
+          createdAt: serverTimestamp(),
+        })
+        setQuestions((current) => [{ ...editingQuestion, id: docRef.id, text, options, correctAnswer }, ...current])
+        setMessageTone('success')
+        setMessage('Question created.')
       } else {
-        // Updating existing question
-        const updatedQuestions = questions.map(q => 
-          q.id === editingQuestion.id ? editingQuestion : q
+        await updateDoc(doc(db, 'questions', editingQuestion.id), payload)
+        setQuestions((current) =>
+          current.map((question) =>
+            question.id === editingQuestion.id ? { ...editingQuestion, text, options, correctAnswer } : question
+          )
         )
-        setQuestions(updatedQuestions)
+        setMessageTone('success')
+        setMessage('Question updated.')
       }
+
       setEditingQuestion(null)
       setShowForm(false)
       onQuestionUpdate?.()
+    } catch (error) {
+      console.error('Failed to save question:', error)
+      setMessageTone('error')
+      setMessage(toFriendlyQuestionError(error))
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -116,12 +279,72 @@ export default function QuestionManager({ onQuestionUpdate }: QuestionManagerPro
 
   return (
     <div className="space-y-6">
+      {message ? (
+        <div
+          className={`rounded-lg px-4 py-3 text-sm ${
+            messageTone === 'success'
+              ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+              : 'border border-red-200 bg-red-50 text-red-700'
+          }`}
+        >
+          {message}
+        </div>
+      ) : null}
+
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-xl font-semibold text-excel-dark-gray">Question Management</h3>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 space-y-2">
+          <h3 className="text-xl font-semibold text-excel-dark-gray">Question Management</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Difficulty</label>
+            <select
+              value={difficultyFilter}
+              onChange={(event) => {
+                const value = event.target.value
+                setDifficultyFilter(value === 'all' ? 'all' : (Number(value) as 1 | 2 | 3 | 4 | 5))
+              }}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-excel-green focus:border-transparent"
+            >
+              <option value="all">All</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+
+            <label className="text-sm font-medium text-gray-700">Search</label>
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-excel-green focus:border-transparent sm:w-72"
+              placeholder="Search text, category, options..."
+            />
+            {searchQuery.trim() ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="bg-white hover:bg-gray-100 text-excel-dark-gray border border-gray-300 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+              >
+                Clear
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => void loadQuestions(difficultyFilter)}
+              className="bg-white hover:bg-gray-100 text-excel-dark-gray border border-gray-300 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+            >
+              Refresh
+            </button>
+            <span className="text-xs text-gray-500">
+              Showing {visibleQuestions.length} of {questions.length}
+            </span>
+          </div>
+        </div>
         <button
           onClick={handleAddNew}
-          className="bg-excel-green hover:bg-excel-dark-green text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+          className="bg-excel-green hover:bg-excel-dark-green text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg shrink-0"
         >
           Add New Question
         </button>
@@ -129,18 +352,29 @@ export default function QuestionManager({ onQuestionUpdate }: QuestionManagerPro
 
       {/* Question List */}
       <div className="grid gap-4">
-        {questions.map((question) => (
-          <div key={question.id} className="card hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex-1">
+        {visibleQuestions.length === 0 ? (
+          <div className="card">
+            <p className="text-gray-600 text-sm">{emptyStateMessage}</p>
+          </div>
+        ) : null}
+
+        {visibleQuestions.map((question) => (
+          <div key={question.id} className="card hover:shadow-md transition-shadow overflow-hidden">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
+              <div className="flex-1 min-w-0">
                 <h4 className="font-semibold text-excel-dark-gray mb-2">{question.text}</h4>
-                <div className="flex gap-2 text-sm text-gray-600 mb-2">
+                <div className="flex flex-wrap gap-2 text-sm text-gray-600 mb-2">
                   <span className="bg-gray-100 px-2 py-1 rounded">{question.category}</span>
                   <span className="bg-gray-100 px-2 py-1 rounded">Difficulty: {question.difficulty}</span>
-                  <span className="bg-excel-light-green px-2 py-1 rounded">Correct: {question.options[question.correctAnswer]}</span>
+                  <span
+                    className="bg-excel-light-green px-2 py-1 rounded max-w-full truncate"
+                    title={`Correct: ${question.options[question.correctAnswer]}`}
+                  >
+                    Correct: {question.options[question.correctAnswer]}
+                  </span>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-end gap-2 shrink-0">
                 <button
                   onClick={() => handleEdit(question)}
                   className="bg-white hover:bg-gray-100 text-excel-dark-gray border border-gray-300 font-semibold py-1 px-3 rounded-lg transition-colors duration-200 text-sm"
@@ -150,13 +384,14 @@ export default function QuestionManager({ onQuestionUpdate }: QuestionManagerPro
                 <button
                   onClick={() => handleDelete(question.id)}
                   className="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-lg transition-colors duration-200 text-sm"
+                  disabled={deletingId === question.id}
                 >
-                  Delete
+                  {deletingId === question.id ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               {question.options.map((option, index) => (
                 <div
                   key={index}
@@ -212,11 +447,11 @@ export default function QuestionManager({ onQuestionUpdate }: QuestionManagerPro
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEditingQuestion({...editingQuestion, category: e.target.value as Question['category']})}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-excel-green focus:border-transparent"
                     >
-                      <option value="Formulas">Formulas</option>
-                      <option value="Shortcuts">Shortcuts</option>
-                      <option value="Charts">Charts</option>
-                      <option value="DataAnalysis">Data Analysis</option>
-                      <option value="Formatting">Formatting</option>
+                      {QUESTION_CATEGORIES.map((category) => (
+                        <option key={category} value={category}>
+                          {category === 'DataAnalysis' ? 'Data Analysis' : category}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>

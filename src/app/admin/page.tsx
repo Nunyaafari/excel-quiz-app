@@ -38,13 +38,14 @@ type AdminTab = 'overview' | 'content' | 'questionBank' | 'analytics' | 'batches
 const CHART_COLORS = ['#0f2744', '#144d6a', '#1f6f6d', '#3f86a8', '#82b8d7', '#94d2bd']
 
 export default function AdminPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, signIn } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [analyticsDetails, setAnalyticsDetails] = useState<AnalyticsDetails | null>(null)
   const [pageLoading, setPageLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminCheckError, setAdminCheckError] = useState<string | null>(null)
+  const [signingIn, setSigningIn] = useState(false)
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [importResult, setImportResult] = useState<CSVImportResult | null>(null)
   const [importing, setImporting] = useState(false)
@@ -247,9 +248,12 @@ export default function AdminPage() {
     }
 
     if (!user) {
-      router.push('/')
+      setPageLoading(false)
       return
     }
+
+    setPageLoading(true)
+    setAdminCheckError(null)
 
     let active = true
 
@@ -501,6 +505,19 @@ export default function AdminPage() {
     const entries = Object.entries(analyticsDetails?.difficultyLevelDistribution ?? {})
     return entries.sort(([left], [right]) => Number(left) - Number(right))
   }, [analyticsDetails])
+  const requestSnapshot = useMemo(() => {
+    return trainingRequests.reduce(
+      (accumulator, request) => {
+        if (request.requestType === 'assessment') {
+          accumulator.assessment += 1
+        } else {
+          accumulator.training += 1
+        }
+        return accumulator
+      },
+      { training: 0, assessment: 0 }
+    )
+  }, [trainingRequests])
   const adminTabs: Array<{ id: AdminTab; label: string; description: string }> = [
     { id: 'overview', label: 'Overview', description: 'Recent activity and admin shortcuts' },
     { id: 'content', label: 'Blog', description: 'Create and publish SEO blog posts' },
@@ -519,7 +536,46 @@ export default function AdminPage() {
   }
 
   if (!user) {
-    return null
+    return (
+      <div className="min-h-screen bg-[#eef2f6] py-10">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl rounded-2xl border border-[#d9e3ef] bg-white p-8 text-center shadow-sm">
+            <h1 className="mb-3 text-3xl font-bold text-[#142842]">Sign In Required</h1>
+            <p className="mb-6 text-[#5a6f8a]">Please sign in with Google to access the admin dashboard.</p>
+
+            {adminCheckError && <p className="mb-4 text-sm text-red-600">{adminCheckError}</p>}
+
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => router.push('/')}
+              >
+                Back to Home
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={signingIn}
+                onClick={async () => {
+                  setSigningIn(true)
+                  try {
+                    await signIn()
+                  } catch (error) {
+                    console.error('Admin sign-in failed:', error)
+                    alert('Sign in failed. Please allow popups and try again.')
+                  } finally {
+                    setSigningIn(false)
+                  }
+                }}
+              >
+                {signingIn ? 'Signing In...' : 'Sign In with Google'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!isAdmin) {
@@ -933,11 +989,13 @@ export default function AdminPage() {
           </section>
 
           {stats && (
-            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               <MetricCard label="Total Questions" value={String(stats.totalQuestions)} />
               <MetricCard label="Total Users" value={String(stats.totalUsers)} />
               <MetricCard label="Quiz Attempts" value={String(stats.totalQuizAttempts)} />
               <MetricCard label="Average Score" value={`${stats.averageScore}%`} />
+              <MetricCard label="Training Requests" value={String(requestSnapshot.training)} />
+              <MetricCard label="Assessment Requests" value={String(requestSnapshot.assessment)} />
             </section>
           )}
 
